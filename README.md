@@ -30,33 +30,49 @@ cargo install --path .
 
 ## Quick Start
 
-### 1. Initialize a vault
+### Local-Only Usage (Single Device)
+
+Perfect for local version control without remote sync:
 
 ```bash
+# 1. Initialize vault
 gfv init
+
+# 2. Add config files
+gfv add ~/.zshrc
+gfv add ~/.gitconfig
+gfv add ~/.config/nvim
+
+# 3. Keep files synced
+gfv sync
 ```
 
-### 2. Add your config files
+Your files are now version controlled locally!
 
+### Multi-Device Usage (With Remote)
+
+For syncing configs across multiple devices:
+
+#### On first device
 ```bash
+# 1. Initialize with remote
+gfv init --remote git@github.com:username/my-configs.git
+
+# 2. Add your config files
 gfv add ~/.zshrc
 gfv add ~/.config/nvim
 gfv add ~/.gitconfig
-```
 
-### 3. Update files in the vault and push to remote(if configured)
-
-```bash
+# 3. Push to remote
 gfv push
 ```
 
-### 4. On another device
-
+#### On another device
 ```bash
 gfv clone git@github.com:username/my-configs.git
 ```
 
-That's it! Your config files are now synced.
+That's it! Your config files are now synced across devices.
 
 ## Usage
 
@@ -165,7 +181,20 @@ This allows you to:
 
 🚧 **Early Development** - This project is in active development. APIs may change.
 
-See [DESIGN.md](./DESIGN.md) for detailed design documentation.
+## Documentation
+
+- **[Design Overview](./docs/OVERVIEW.md)** - Architecture and design principles
+- **Command Reference:**
+  - [init](./docs/commands/init.md) - Initialize a vault
+  - [add](./docs/commands/add.md) - Add files to vault
+  - [remove](./docs/commands/remove.md) - Remove files from vault
+  - [list](./docs/commands/list.md) - List managed files
+  - [sync](./docs/commands/sync.md) - Synchronize files
+  - [status](./docs/commands/status.md) - Show status
+  - [push](./docs/commands/push.md) - Push to remote
+  - [pull](./docs/commands/pull.md) - Pull from remote
+  - [clone](./docs/commands/clone.md) - Clone remote vault
+  - [vault](./docs/commands/vault.md) - Manage multiple vaults
 
 ## Roadmap
 
