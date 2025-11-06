@@ -115,6 +115,6 @@ conflict_strategy = "prompt"
 
 ## See Also
 
-- [push.md](./push.md) - AI commit messages
+- [backup.md](./backup.md) - AI commit messages
 - [sync.md](./sync.md) - Conflict resolution
 - [OVERVIEW.md](../OVERVIEW.md) - Configuration details

@@ -169,7 +169,7 @@ gfv sync --force-vault
 
 ## See Also
 
-- [push.md](./push.md) - Push to remote
-- [pull.md](./pull.md) - Pull from remote
+- [backup.md](./backup.md) - Push to remote
+- [restore.md](./restore.md) - Pull from remote
 - [status.md](./status.md) - Check sync status
 - [OVERVIEW.md](../OVERVIEW.md#conflict-resolution) - Conflict details

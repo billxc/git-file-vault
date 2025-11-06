@@ -50,8 +50,8 @@ Remote Status:
 Summary:
   3 files need sync (1 conflict)
   Run 'gfv sync' to synchronize
-  Run 'gfv pull' to get remote changes
-  Run 'gfv push' to upload local changes
+  Run 'gfv restore' to get remote changes
+  Run 'gfv backup' to upload local changes
 ```
 
 ### Short Format
@@ -138,7 +138,7 @@ gfv sync
 ```bash
 gfv status
 # Review what would be pushed
-gfv push
+gfv backup
 ```
 
 ### After editing files
@@ -151,6 +151,6 @@ gfv status
 ## See Also
 
 - [sync.md](./sync.md) - Synchronize files
-- [push.md](./push.md) - Push changes
-- [pull.md](./pull.md) - Pull changes
+- [backup.md](./backup.md) - Push changes
+- [restore.md](./restore.md) - Pull changes
 - [list.md](./list.md) - List all managed files

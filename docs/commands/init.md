@@ -44,7 +44,7 @@ Creates vault at `~/.gfv` without remote. Perfect for single-device local versio
 ```bash
 gfv init --remote git@github.com:user/configs.git
 ```
-Creates new vault and sets remote. Use `gfv push` to upload files later.
+Creates new vault and sets remote. Use `gfv backup` to upload files later.
 
 ### Connect to existing remote (additional device)
 ```bash
@@ -150,7 +150,7 @@ Initializing vault at /Users/username/.gfv
 
 Next steps:
   gfv add <file>    # Add files to vault
-  gfv push          # Push to remote
+  gfv backup          # Push to remote
 ```
 
 ### Existing remote (additional device)
@@ -248,6 +248,6 @@ Thumbs.db
 ## See Also
 
 - [add.md](./add.md) - Add files to vault after initialization
-- [push.md](./push.md) - Push to remote
-- [pull.md](./pull.md) - Pull updates from remote
+- [backup.md](./backup.md) - Push to remote
+- [restore.md](./restore.md) - Pull updates from remote
 - [OVERVIEW.md](../OVERVIEW.md) - General design overview

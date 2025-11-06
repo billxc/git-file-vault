@@ -44,7 +44,7 @@ gfv add ~/.gitconfig
 gfv add ~/.config/nvim
 
 # 3. Keep files synced
-gfv sync
+gfv backup
 ```
 
 Your files are now version controlled locally!
@@ -64,7 +64,7 @@ gfv add ~/.config/nvim
 gfv add ~/.gitconfig
 
 # 3. Push to remote
-gfv push
+gfv backup
 ```
 
 #### On another device
@@ -96,13 +96,13 @@ gfv status
 gfv sync
 
 # Push to remote (auto-syncs, commits with AI if configured, and pushes)
-gfv push
+gfv backup
 
 # Specify commit message manually
-gfv push -m "Update zsh config"
+gfv backup -m "Update zsh config"
 
 # Pull from remote (pulls and syncs)
-gfv pull
+gfv restore
 
 # Remove file from vault
 gfv remove zsh/zshrc
@@ -148,7 +148,7 @@ gfv config ai.api_key sk-xxxxx
 Then every time you push:
 
 ```bash
-gfv push
+gfv backup
 # → Analyzing changes...
 # → Suggested: "feat: add git aliases and improve zsh prompt"
 # → [A]ccept / [E]dit / [R]egenerate / [C]ancel?
@@ -189,12 +189,10 @@ This allows you to:
   - [add](./docs/commands/add.md) - Add files to vault
   - [remove](./docs/commands/remove.md) - Remove files from vault
   - [list](./docs/commands/list.md) - List managed files
-  - [sync](./docs/commands/sync.md) - Synchronize files
   - [status](./docs/commands/status.md) - Show status
-  - [push](./docs/commands/push.md) - Push to remote
-  - [pull](./docs/commands/pull.md) - Pull from remote
+  - [backup](./docs/commands/backup.md) - Backup to remote
+  - [restore](./docs/commands/restore.md) - Restore from remote
   - [config](./docs/commands/config.md) - Manage configuration
-  - [vault](./docs/commands/vault.md) - Manage multiple vaults
 
 ## Roadmap
 

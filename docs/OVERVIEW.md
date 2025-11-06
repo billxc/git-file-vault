@@ -166,15 +166,17 @@ conflict_strategy = "prompt"  # prompt | use_vault | use_source
 | `add` | Start managing file | [add.md](./commands/add.md) |
 | `remove` | Stop managing file | [remove.md](./commands/remove.md) |
 | `list` | List managed files | [list.md](./commands/list.md) |
-| `sync` | Full sync (commit + pull + bidirectional) | [sync.md](./commands/sync.md) |
 | `status` | Show status | [status.md](./commands/status.md) |
-| `push` | Upload changes | [push.md](./commands/push.md) |
-| `pull` | Download changes | [pull.md](./commands/pull.md) |
+| `backup` | Copy source → vault, commit, pull, and push | [backup.md](./commands/backup.md) |
+| `restore` | Pull and copy vault → source | [restore.md](./commands/restore.md) |
 | `config` | Manage configuration | [config.md](./commands/config.md) |
-| `vault` | Manage multiple vaults | [vault.md](./commands/vault.md) |
+
+**8 commands** - Simple one-way sync, no conflict detection in MVP.
 
 ### Future Commands (v0.2.0+)
 
+- `sync` - Bidirectional sync with conflict detection ([future/sync.md](./commands/future/sync.md))
+- `vault` - Multi-vault management ([future/vault.md](./commands/future/vault.md))
 - `diff` - Show differences between vault and source
 - `restore` - Restore to specific version
 
@@ -327,8 +329,8 @@ Run 'gfv init' to create a new vault.
 | `gfv add` | Start managing a file | git add + git commit |
 | `gfv remove` | Stop managing a file | git rm + git commit |
 | `gfv sync` | Bidirectional sync | sync to-vault + git commit + git pull + sync from-vault |
-| `gfv push` | Upload changes | sync to-vault + git commit + git push |
-| `gfv pull` | Download changes | git pull + sync from-vault |
+| `gfv backup` | Upload changes | sync to-vault + git commit + git push |
+| `gfv restore` | Download changes | git pull + sync from-vault |
 | `gfv status` | Show sync status | git status + custom logic |
 
 **Users NEVER run Git commands directly.**
@@ -369,19 +371,22 @@ This ensures vault, source files, and remote stay synchronized.
 
 ## Roadmap
 
-### v0.1.0 - MVP
-- ✅ Single vault support
-- ✅ Core commands: init, add, remove, list, sync, status, push, pull, config, vault (10 commands)
-- ✅ NO separate commit command (handled by push)
+### v0.1.0 - MVP (Simplified)
+- ✅ Single vault support (default at `~/.gfv`)
+- ✅ Core commands: init, add, remove, list, status, backup, restore, config (8 commands)
+- ✅ Simple one-way operations: backup (source → vault → remote), restore (remote → vault → source)
+- ✅ NO conflict detection in MVP (except Git-level conflicts which stop execution)
+- ✅ NO separate commit command (handled by backup)
 - ✅ NO separate clone command (handled by init)
-- ✅ Basic conflict resolution (three-way choice)
 - ✅ Platform tags (optional)
 - ✅ AI message generation (smart auto-detection)
 - ✅ Path inference
 - ✅ Complete Git abstraction
 
-### v0.2.0 - Enhanced Features
-- Multi-vault support (full implementation)
+### v0.2.0 - Enhanced Sync
+- Bidirectional sync with conflict detection (`sync` command)
+- Multi-vault support (`vault` command)
+- Conflict resolution strategies
 - External merge tools
 - `diff` command
 - `restore` command with version history
