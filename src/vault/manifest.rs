@@ -1,17 +1,14 @@
-// Manifest module - manages .vault-manifest.json
+// Manifest module - manages manifest.json
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 use chrono::{DateTime, Utc};
 use anyhow::{Context, Result};
-use crate::error::VaultError;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Manifest {
     pub version: String,
-    #[serde(rename = "vaultPath")]
-    pub vault_path: String,
     pub files: HashMap<String, FileEntry>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remote: Option<RemoteConfig>,
@@ -38,21 +35,21 @@ pub struct RemoteConfig {
 }
 
 impl Manifest {
-    pub fn new(vault_path: String, remote: Option<RemoteConfig>) -> Self {
+    pub fn new(remote: Option<RemoteConfig>) -> Self {
         Self {
             version: "1.0".to_string(),
-            vault_path,
             files: HashMap::new(),
             remote,
         }
     }
 
-    /// Load manifest from .vault-manifest.json in the vault directory
-    pub fn load(vault_path: &Path) -> Result<Self> {
-        let manifest_path = vault_path.join(".vault-manifest.json");
+    /// Load manifest from manifest.json in the vault directory
+    pub fn load(vault_dir: &Path) -> Result<Self> {
+        let manifest_path = vault_dir.join("manifest.json");
 
         if !manifest_path.exists() {
-            return Err(VaultError::NotInitialized(vault_path.display().to_string()).into());
+            // Return empty manifest if not exists
+            return Ok(Self::new(None));
         }
 
         let content = std::fs::read_to_string(&manifest_path)
@@ -64,9 +61,9 @@ impl Manifest {
         Ok(manifest)
     }
 
-    /// Save manifest to .vault-manifest.json in the vault directory
-    pub fn save(&self, vault_path: &Path) -> Result<()> {
-        let manifest_path = vault_path.join(".vault-manifest.json");
+    /// Save manifest to manifest.json in the vault directory
+    pub fn save(&self, vault_dir: &Path) -> Result<()> {
+        let manifest_path = vault_dir.join("manifest.json");
 
         let content = serde_json::to_string_pretty(self)
             .context("Failed to serialize manifest")?;

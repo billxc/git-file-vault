@@ -4,20 +4,19 @@ use anyhow::{bail, Context, Result};
 use colored::Colorize;
 
 use crate::vault::Vault;
+use super::helpers::get_current_vault_dir;
 
 pub fn list(long: bool) -> Result<()> {
-    // Get vault path
-    let home = dirs::home_dir()
-        .context("Failed to get home directory")?;
-    let vault_path = home.join(".gfv");
+    // Get vault directory
+    let vault_dir = get_current_vault_dir()?;
 
     // Check if vault is initialized
-    if !Vault::is_initialized(&vault_path) {
+    if !Vault::is_initialized(&vault_dir) {
         bail!("Vault not initialized. Run 'gfv init' first.");
     }
 
     // Load vault
-    let vault = Vault::load(&vault_path)
+    let vault = Vault::load(&vault_dir)
         .context("Failed to load vault")?;
 
     // Check if empty
@@ -46,7 +45,7 @@ pub fn list(long: bool) -> Result<()> {
             println!();
         }
     } else {
-        // Short format
+        // Short format - show file mappings
         println!("{} managed files:\n", vault.manifest.files.len());
 
         let mut sorted_paths: Vec<_> = vault.manifest.files.keys().collect();
@@ -66,7 +65,13 @@ pub fn list(long: bool) -> Result<()> {
                 "📄"
             };
 
-            println!("  {} {}{}", type_icon, vault_path, platform_tag);
+            // Show vault path → source path mapping
+            println!("  {} {} {}→ {}",
+                type_icon,
+                vault_path.green(),
+                platform_tag,
+                entry.source_path.dimmed()
+            );
         }
 
         println!("\nUse 'gfv list --long' for detailed information.");

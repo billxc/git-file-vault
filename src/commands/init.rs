@@ -2,56 +2,55 @@
 
 use anyhow::{bail, Context, Result};
 use colored::Colorize;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::fs;
 
 use crate::vault::{Vault, manifest::{Manifest, RemoteConfig}};
 use crate::git_ops::GitRepo;
 
 pub fn init(
-    path: Option<String>,
+    _path: Option<String>,
     remote: Option<String>,
     branch: String,
     name: String,
-    no_sync: bool,
+    _no_sync: bool,
 ) -> Result<()> {
-    // Determine vault path
-    let vault_path = if let Some(p) = path {
-        PathBuf::from(p)
-    } else {
-        let home = dirs::home_dir()
-            .context("Failed to get home directory")?;
-        home.join(".gfv")
-    };
+    // Determine vault directory: ~/.gfv/{name}/
+    let home = dirs::home_dir()
+        .context("Failed to get home directory")?;
+    let vault_dir = home.join(".gfv").join(&name);
+    let repo_path = vault_dir.join("repo");
 
     // Check if vault already exists
-    if Vault::is_initialized(&vault_path) {
-        bail!("Vault already initialized at {}", vault_path.display());
+    if Vault::is_initialized(&vault_dir) {
+        bail!("Vault '{}' already initialized at {}", name, vault_dir.display());
     }
 
-    // Create vault directory
-    fs::create_dir_all(&vault_path)
+    // Create vault directory structure
+    fs::create_dir_all(&vault_dir)
         .context("Failed to create vault directory")?;
+    fs::create_dir_all(&repo_path)
+        .context("Failed to create repo directory")?;
 
-    println!("{} Initializing vault at {}...", "==>".green().bold(), vault_path.display());
+    println!("{} Initializing vault '{}'...", "==>".green().bold(), name);
+    println!("  Vault dir: {}", vault_dir.display());
+    println!("  Repo dir: {}", repo_path.display());
 
     // Handle three scenarios based on documentation
     if let Some(remote_url) = remote {
         // Check if remote is empty or has content by attempting to clone
         println!("{} Checking remote repository...", "==>".green().bold());
 
-        match try_clone_remote(&remote_url, &vault_path) {
-            Ok(git_repo) => {
+        // Try to clone into repo directory
+        match GitRepo::clone(&remote_url, &repo_path) {
+            Ok(_git_repo) => {
                 // Remote has content - use cloned repository
                 println!("{} Cloned existing vault from remote", "✓".green().bold());
 
-                // Load manifest from cloned vault
-                let manifest = Manifest::load(&vault_path)
-                    .context("Failed to load manifest from cloned vault")?;
+                // Load or create manifest
+                let manifest = Manifest::load(&vault_dir)?;
 
-                println!("{} Vault initialized successfully!", "✓".green().bold());
-                println!("  Name: {}", name);
-                println!("  Path: {}", vault_path.display());
+                println!("{} Vault '{}' initialized successfully!", "✓".green().bold(), name);
                 println!("  Remote: {}", remote_url);
                 println!("  Files: {}", manifest.files.len());
 
@@ -62,33 +61,34 @@ pub fn init(
                 // Remote is empty or doesn't exist - create new vault and push
                 println!("{} Remote is empty, creating new vault...", "==>".green().bold());
 
-                // Remove the failed clone directory
-                fs::remove_dir_all(&vault_path).ok();
-                fs::create_dir_all(&vault_path)?;
+                // Remove the failed clone directory and recreate
+                fs::remove_dir_all(&repo_path).ok();
+                fs::create_dir_all(&repo_path)?;
 
                 // Initialize Git repository
-                let git_repo = GitRepo::init(&vault_path)
+                let git_repo = GitRepo::init(&repo_path)
                     .context("Failed to initialize Git repository")?;
 
-                // Create manifest
+                // Create manifest with remote config
                 let remote_config = RemoteConfig {
                     url: remote_url.clone(),
                     branch: branch.clone(),
                 };
-                let manifest = Manifest::new(
-                    vault_path.display().to_string(),
-                    Some(remote_config),
-                );
+                let manifest = Manifest::new(Some(remote_config));
 
                 // Save manifest
-                manifest.save(&vault_path)
+                manifest.save(&vault_dir)
                     .context("Failed to save manifest")?;
 
-                // Add and commit manifest
+                // Create a .gitignore in repo to avoid accidentally committing local files
+                let gitignore_path = repo_path.join(".gitignore");
+                fs::write(&gitignore_path, "# Git-file-vault managed repository\n")?;
+
+                // Add and commit
                 git_repo.add_all()
-                    .context("Failed to add manifest")?;
+                    .context("Failed to add files")?;
                 git_repo.commit("Initialize vault")
-                    .context("Failed to commit manifest")?;
+                    .context("Failed to commit")?;
 
                 // Add remote and push
                 git_repo.add_remote("origin", &remote_url)
@@ -96,9 +96,7 @@ pub fn init(
                 git_repo.push("origin", &branch)
                     .context("Failed to push to remote")?;
 
-                println!("{} Vault initialized and pushed to remote!", "✓".green().bold());
-                println!("  Name: {}", name);
-                println!("  Path: {}", vault_path.display());
+                println!("{} Vault '{}' initialized and pushed to remote!", "✓".green().bold(), name);
                 println!("  Remote: {}", remote_url);
 
                 // TODO: Add vault to global config
@@ -108,35 +106,32 @@ pub fn init(
         // No remote - local-only vault
         println!("{} Creating local-only vault...", "==>".green().bold());
 
-        // Initialize Git repository
-        let git_repo = GitRepo::init(&vault_path)
+        // Initialize Git repository in repo directory
+        let git_repo = GitRepo::init(&repo_path)
             .context("Failed to initialize Git repository")?;
 
         // Create manifest
-        let manifest = Manifest::new(vault_path.display().to_string(), None);
+        let manifest = Manifest::new(None);
 
         // Save manifest
-        manifest.save(&vault_path)
+        manifest.save(&vault_dir)
             .context("Failed to save manifest")?;
 
-        // Add and commit manifest
-        git_repo.add_all()
-            .context("Failed to add manifest")?;
-        git_repo.commit("Initialize vault")
-            .context("Failed to commit manifest")?;
+        // Create a .gitignore in repo
+        let gitignore_path = repo_path.join(".gitignore");
+        fs::write(&gitignore_path, "# Git-file-vault managed repository\n")?;
 
-        println!("{} Vault initialized successfully!", "✓".green().bold());
-        println!("  Name: {}", name);
-        println!("  Path: {}", vault_path.display());
+        // Add and commit
+        git_repo.add_all()
+            .context("Failed to add .gitignore")?;
+        git_repo.commit("Initialize vault")
+            .context("Failed to commit")?;
+
+        println!("{} Vault '{}' initialized successfully!", "✓".green().bold(), name);
         println!("  Mode: Local-only (no remote)");
 
         // TODO: Add vault to global config
     }
 
     Ok(())
-}
-
-/// Try to clone a remote repository. Returns Ok if successful, Err if remote is empty or clone fails.
-fn try_clone_remote(url: &str, path: &Path) -> Result<GitRepo> {
-    GitRepo::clone(url, path)
 }

@@ -13,17 +13,16 @@ pub fn restore(
     force: bool,
 ) -> Result<()> {
     // Get vault path
-    let home = dirs::home_dir()
-        .context("Failed to get home directory")?;
-    let vault_path = home.join(".gfv");
+    let vault_dir = super::helpers::get_current_vault_dir()?;
+    // Vault dir obtained above
 
     // Check if vault is initialized
-    if !Vault::is_initialized(&vault_path) {
+    if !Vault::is_initialized(&vault_dir) {
         bail!("Vault not initialized. Run 'gfv init' first.");
     }
 
     // Load vault
-    let vault = Vault::load(&vault_path)
+    let vault = Vault::load(&vault_dir)
         .context("Failed to load vault")?;
 
     if vault.manifest.files.is_empty() {
@@ -37,7 +36,7 @@ pub fn restore(
     if let Some(ref remote_config) = vault.manifest.remote {
         println!("  {} Pulling from remote...", "==>".green());
 
-        let git_repo = GitRepo::open(&vault_path)
+        let git_repo = GitRepo::open(&vault_dir)
             .context("Failed to open git repository")?;
 
         match git_repo.pull("origin", &remote_config.branch) {
@@ -46,7 +45,7 @@ pub fn restore(
             }
             Err(e) => {
                 eprintln!("{} Failed to pull from remote: {}", "✗".red().bold(), e);
-                eprintln!("\nResolve conflicts manually in: {}", vault_path.display());
+                eprintln!("\nResolve conflicts manually in: {}", vault_dir.display());
                 return Err(e);
             }
         }
@@ -59,7 +58,7 @@ pub fn restore(
 
         for (vault_relative_path, entry) in &vault.manifest.files {
             let source_path = std::path::PathBuf::from(&entry.source_path);
-            let vault_file_path = vault_path.join(vault_relative_path);
+            let vault_file_path = vault_dir.join(vault_relative_path);
 
             if source_path.exists() && vault_file_path.exists() {
                 // Simple check: compare file sizes (for MVP)
@@ -100,7 +99,7 @@ pub fn restore(
 
     for (vault_relative_path, entry) in &vault.manifest.files {
         let source_path = std::path::PathBuf::from(&entry.source_path);
-        let vault_file_path = vault_path.join(vault_relative_path);
+        let vault_file_path = vault_dir.join(vault_relative_path);
 
         // Skip if vault file doesn't exist
         if !vault_file_path.exists() {

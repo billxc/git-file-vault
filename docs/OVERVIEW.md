@@ -68,6 +68,42 @@ git-file-vault (gfv) completely manages the Git repository internally. Users nev
 
 ## Architecture
 
+### Directory Structure
+
+gfv uses a clean separation between Git repositories and local configuration:
+
+```
+~/.gfv/                          # gfv root directory
+├── config.toml                  # Global configuration (AI keys, current vault, etc.)
+│
+├── default/                     # Default vault
+│   ├── repo/                    # Git repository (only file contents)
+│   │   ├── .git/
+│   │   ├── nvim/init.vim
+│   │   └── zsh/zshrc
+│   └── manifest.json            # File mappings (NOT in Git)
+│
+├── work/                        # Work vault (example)
+│   ├── repo/
+│   └── manifest.json
+│
+└── personal/                    # Personal vault (example)
+    ├── repo/
+    └── manifest.json
+```
+
+**Key Design Points:**
+- **`repo/`** - Git repository containing ONLY managed file contents
+- **`manifest.json`** - Local configuration, NOT tracked by Git, stores file path mappings
+- **`config.toml`** - Global settings shared across all vaults
+- **Multiple vaults** - Each vault is independent with its own repo and manifest
+
+**Why this structure?**
+1. **Clean Git history** - Repository only contains actual files, no metadata
+2. **Cross-device compatibility** - File mappings are local to each machine
+3. **Privacy** - No local paths exposed in Git commits
+4. **Flexibility** - Different devices can manage different file subsets
+
 ### Technology Stack
 
 - **Language**: Rust
@@ -89,12 +125,11 @@ git-file-vault (gfv) completely manages the Git repository internally. Users nev
 
 #### Vault Manifest Format
 
-Location: `<vault>/.vault-manifest.json`
+Location: `~/.gfv/{vault-name}/manifest.json` (NOT in Git)
 
 ```json
 {
   "version": "1.0",
-  "vaultPath": "/Users/username/.gfv",
   "files": {
     "zsh/zshrc": {
       "sourcePath": "/Users/username/.zshrc",

@@ -1,5 +1,6 @@
 // Commands module - implements all CLI commands
 
+pub mod helpers;
 pub mod init;
 pub mod add;
 pub mod list;

@@ -8,25 +8,23 @@ use chrono::Utc;
 
 use crate::vault::{Vault, manifest::FileEntry};
 use crate::git_ops::GitRepo;
-use crate::error::VaultError;
+use super::helpers::get_current_vault_dir;
 
 pub fn add(
     source: String,
     name: Option<String>,
     platform: Option<String>,
 ) -> Result<()> {
-    // Get vault path (for now, use default ~/.gfv)
-    let home = dirs::home_dir()
-        .context("Failed to get home directory")?;
-    let vault_path = home.join(".gfv");
+    // Get vault directory
+    let vault_dir = get_current_vault_dir()?;
 
     // Check if vault is initialized
-    if !Vault::is_initialized(&vault_path) {
+    if !Vault::is_initialized(&vault_dir) {
         bail!("Vault not initialized. Run 'gfv init' first.");
     }
 
     // Load vault
-    let mut vault = Vault::load(&vault_path)
+    let mut vault = Vault::load(&vault_dir)
         .context("Failed to load vault")?;
 
     // Validate and resolve source path
@@ -91,8 +89,8 @@ pub fn add(
     println!("  Vault path: {}", vault_relative_path);
     println!("  Platform: {}", platform.as_deref().unwrap_or("all"));
 
-    // Copy file/directory to vault
-    let vault_file_path = vault_path.join(&vault_relative_path);
+    // Copy file/directory to vault repo
+    let vault_file_path = vault.get_file_path(&vault_relative_path);
 
     // Create parent directories if needed
     if let Some(parent) = vault_file_path.parent() {
@@ -126,8 +124,8 @@ pub fn add(
 
     println!("{} Updated manifest", "✓".green().bold());
 
-    // Commit changes
-    let git_repo = GitRepo::open(&vault_path)
+    // Commit changes to repo
+    let git_repo = GitRepo::open(&vault.repo_path)
         .context("Failed to open git repository")?;
 
     git_repo.add_all()

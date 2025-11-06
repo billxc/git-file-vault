@@ -12,24 +12,24 @@ pub fn config(
     unset: Option<String>,
 ) -> Result<()> {
     // Get vault path
-    let home = dirs::home_dir()
-        .context("Failed to get home directory")?;
-    let vault_path = home.join(".gfv");
+    let vault_dir = super::helpers::get_current_vault_dir()?;
+    // Vault dir obtained above
 
     // Check if vault is initialized
-    if !Vault::is_initialized(&vault_path) {
+    if !Vault::is_initialized(&vault_dir) {
         bail!("Vault not initialized. Run 'gfv init' first.");
     }
 
     // Load vault
-    let vault = Vault::load(&vault_path)
+    let vault = Vault::load(&vault_dir)
         .context("Failed to load vault")?;
 
     if list {
         // List all configuration
         println!("{}", "Vault Configuration:".bold());
         println!("\n{}", "General:".bold());
-        println!("  vault.path = {}", vault.path.display());
+        println!("  vault.dir = {}", vault.vault_dir.display());
+        println!("  vault.repo = {}", vault.repo_path.display());
 
         if let Some(ref remote_config) = vault.manifest.remote {
             println!("\n{}", "Remote:".bold());
@@ -62,8 +62,11 @@ pub fn config(
     if let Some(k) = key {
         // Get a single key
         match k.as_str() {
-            "vault.path" => {
-                println!("{}", vault.path.display());
+            "vault.dir" => {
+                println!("{}", vault.vault_dir.display());
+            }
+            "vault.repo" => {
+                println!("{}", vault.repo_path.display());
             }
             "remote.url" => {
                 if let Some(ref remote_config) = vault.manifest.remote {
