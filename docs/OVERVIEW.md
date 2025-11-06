@@ -104,6 +104,13 @@ gfv uses a clean separation between Git repositories and local configuration:
 3. **Privacy** - No local paths exposed in Git commits
 4. **Flexibility** - Different devices can manage different file subsets
 
+**Important for Cross-Device Usage:**
+- Each device maintains its own `manifest.json` (NOT synced via Git)
+- This allows Device A to map files differently than Device B
+- Example: Device A has files at `/Users/alice/...`, Device B at `/Users/bob/...`
+- The Git repo only knows about relative paths like `zsh/zshrc`, not absolute paths
+- See [TODO.md](./TODO.md) for planned improvements to cross-device workflows
+
 ### Technology Stack
 
 - **Language**: Rust

@@ -179,7 +179,28 @@ This allows you to:
 
 ## Project Status
 
-🚧 **Early Development** - This project is in active development. APIs may change.
+🚧 **Early Development (v0.1.0)** - This project is in active development. APIs may change.
+
+### Current Limitations
+
+**Cross-Device Workflow:**
+- `gfv add` automatically pushes to remote (cannot defer push)
+- `gfv remove` doesn't push to remote (requires manual `gfv backup`)
+- When initializing from existing remote on a new device, local files may differ from repo
+- No conflict detection when adding files that exist in remote with different content
+
+**Planned for v0.2.0** (see [TODO.md](./docs/TODO.md)):
+- Add `--no-push` flag to `add` and `remove` commands for manual control
+- Conflict detection when adding files
+- Better support for multi-device workflows
+
+Current workaround for cross-device setup:
+```bash
+# On new device after init:
+gfv restore ~/.zshrc    # Get remote version first
+# Review differences before adding
+gfv add ~/.zshrc        # This will push immediately
+```
 
 ## Documentation
 
