@@ -143,5 +143,5 @@ gfv pull --force-source   # Always keep local version
 
 - [push.md](./push.md) - Push to remote
 - [sync.md](./sync.md) - Manual sync
-- [clone.md](./clone.md) - Initial clone
+- [init.md](./init.md) - Initialize or clone vault
 - [status.md](./status.md) - Check status

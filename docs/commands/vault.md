@@ -113,4 +113,4 @@ active = "work"  # Current active vault
 ## See Also
 
 - [init.md](./init.md) - Initialize vault
-- [clone.md](./clone.md) - Clone vault
+- [OVERVIEW.md](../OVERVIEW.md) - Multi-vault design

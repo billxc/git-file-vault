@@ -170,7 +170,6 @@ conflict_strategy = "prompt"  # prompt | use_vault | use_source
 | `status` | Show status | [status.md](./commands/status.md) |
 | `push` | Upload changes | [push.md](./commands/push.md) |
 | `pull` | Download changes | [pull.md](./commands/pull.md) |
-| `clone` | Clone remote vault | [clone.md](./commands/clone.md) |
 | `vault` | Manage multiple vaults | [vault.md](./commands/vault.md) |
 
 ### Future Commands (v0.2.0+)
@@ -372,8 +371,9 @@ This ensures vault, source files, and remote stay synchronized.
 
 ### v0.1.0 - MVP
 - ✅ Single vault support
-- ✅ Core commands: init, add, remove, list, sync, status, push, pull, clone
+- ✅ Core commands: init, add, remove, list, sync, status, push, pull, vault (9 commands)
 - ✅ NO separate commit command (handled by push)
+- ✅ NO separate clone command (handled by init)
 - ✅ Basic conflict resolution (three-way choice)
 - ✅ Platform tags (optional)
 - ✅ AI message generation (smart auto-detection)

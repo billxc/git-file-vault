@@ -69,7 +69,7 @@ gfv push
 
 #### On another device
 ```bash
-gfv clone git@github.com:username/my-configs.git
+gfv init --remote git@github.com:username/my-configs.git
 ```
 
 That's it! Your config files are now synced across devices.
@@ -193,7 +193,6 @@ This allows you to:
   - [status](./docs/commands/status.md) - Show status
   - [push](./docs/commands/push.md) - Push to remote
   - [pull](./docs/commands/pull.md) - Pull from remote
-  - [clone](./docs/commands/clone.md) - Clone remote vault
   - [vault](./docs/commands/vault.md) - Manage multiple vaults
 
 ## Roadmap
