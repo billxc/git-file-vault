@@ -90,6 +90,10 @@ pub fn init(
                 git_repo.commit("Initialize vault")
                     .context("Failed to commit")?;
 
+                // Set the branch name to match what user requested
+                git_repo.set_branch(&branch)
+                    .context("Failed to set branch name")?;
+
                 // Add remote and push
                 git_repo.add_remote("origin", &remote_url)
                     .context("Failed to add remote")?;

@@ -36,7 +36,7 @@ pub fn restore(
     if let Some(ref remote_config) = vault.manifest.remote {
         println!("  {} Pulling from remote...", "==>".green());
 
-        let git_repo = GitRepo::open(&vault_dir)
+        let git_repo = GitRepo::open(&vault.repo_path)
             .context("Failed to open git repository")?;
 
         match git_repo.pull("origin", &remote_config.branch) {
@@ -45,7 +45,7 @@ pub fn restore(
             }
             Err(e) => {
                 eprintln!("{} Failed to pull from remote: {}", "✗".red().bold(), e);
-                eprintln!("\nResolve conflicts manually in: {}", vault_dir.display());
+                eprintln!("\nResolve conflicts manually in: {}", vault.repo_path.display());
                 return Err(e);
             }
         }
@@ -58,7 +58,7 @@ pub fn restore(
 
         for (vault_relative_path, entry) in &vault.manifest.files {
             let source_path = std::path::PathBuf::from(&entry.source_path);
-            let vault_file_path = vault_dir.join(vault_relative_path);
+            let vault_file_path = vault.get_file_path(vault_relative_path);
 
             if source_path.exists() && vault_file_path.exists() {
                 // Simple check: compare file sizes (for MVP)
@@ -99,7 +99,7 @@ pub fn restore(
 
     for (vault_relative_path, entry) in &vault.manifest.files {
         let source_path = std::path::PathBuf::from(&entry.source_path);
-        let vault_file_path = vault_dir.join(vault_relative_path);
+        let vault_file_path = vault.get_file_path(vault_relative_path);
 
         // Skip if vault file doesn't exist
         if !vault_file_path.exists() {

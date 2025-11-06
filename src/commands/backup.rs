@@ -98,23 +98,31 @@ pub fn backup(
     if let Some(ref remote_config) = vault.manifest.remote {
         println!("  {} Syncing with remote...", "==>".green());
 
-        // Pull first
-        match git_repo.pull("origin", &remote_config.branch) {
-            Ok(_) => {
-                println!("    {} Pulled from origin/{}", "✓".green(), remote_config.branch);
+        // Get the actual current branch (it might differ from manifest if repo was created with different default)
+        let current_branch = git_repo.current_branch()
+            .unwrap_or_else(|_| remote_config.branch.clone());
+
+        // Only pull if remote branch exists (skip on first push)
+        if git_repo.remote_branch_exists("origin", &current_branch) {
+            match git_repo.pull("origin", &current_branch) {
+                Ok(_) => {
+                    println!("    {} Pulled from origin/{}", "✓".green(), current_branch);
+                }
+                Err(e) => {
+                    eprintln!("{} Failed to pull from remote: {}", "✗".red().bold(), e);
+                    eprintln!("\nYour changes are committed locally but not pushed.");
+                    eprintln!("Resolve conflicts manually in: {}", vault.repo_path.display());
+                    return Err(e);
+                }
             }
-            Err(e) => {
-                eprintln!("{} Failed to pull from remote: {}", "✗".red().bold(), e);
-                eprintln!("\nYour changes are committed locally but not pushed.");
-                eprintln!("Resolve conflicts manually in: {}", vault.repo_path.display());
-                return Err(e);
-            }
+        } else {
+            println!("    {} First push to remote (skipping pull)", "→".blue());
         }
 
         // Push
-        match git_repo.push("origin", &remote_config.branch) {
+        match git_repo.push("origin", &current_branch) {
             Ok(_) => {
-                println!("    {} Pushed to origin/{}", "✓".green(), remote_config.branch);
+                println!("    {} Pushed to origin/{}", "✓".green(), current_branch);
                 println!("\n{} Your configs are backed up to remote!", "✓".green().bold());
             }
             Err(e) => {
