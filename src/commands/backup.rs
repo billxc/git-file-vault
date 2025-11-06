@@ -71,30 +71,29 @@ pub fn backup(
     let git_repo = GitRepo::open(&vault.repo_path)
         .context("Failed to open git repository")?;
 
-    if !git_repo.has_changes()? {
-        println!("\n{} Everything up to date", "✓".green().bold());
-        return Ok(());
+    let has_changes = git_repo.has_changes()?;
+
+    // Step 3: Commit changes if there are any
+    if has_changes {
+        // Generate commit message
+        let commit_msg = if let Some(msg) = message {
+            msg
+        } else {
+            // TODO: Try AI generation if configured
+            // For now, auto-generate based on changed files
+            "Update vault".to_string()
+        };
+
+        git_repo.add_all()
+            .context("Failed to stage changes")?;
+
+        git_repo.commit(&commit_msg)
+            .context("Failed to commit changes")?;
+
+        println!("  {} Committed locally", "✓".green());
     }
 
-    // Step 3: Generate commit message
-    let commit_msg = if let Some(msg) = message {
-        msg
-    } else {
-        // TODO: Try AI generation if configured
-        // For now, auto-generate based on changed files
-        "Update vault".to_string()
-    };
-
-    // Step 4: Commit changes
-    git_repo.add_all()
-        .context("Failed to stage changes")?;
-
-    git_repo.commit(&commit_msg)
-        .context("Failed to commit changes")?;
-
-    println!("  {} Committed locally", "✓".green());
-
-    // Step 5: Sync with remote (if configured)
+    // Step 4: Sync with remote (if configured)
     if let Some(ref remote_config) = vault.manifest.remote {
         println!("  {} Syncing with remote...", "==>".green());
 
@@ -132,8 +131,13 @@ pub fn backup(
             }
         }
     } else {
-        println!("\n{} Your configs are backed up locally!", "✓".green().bold());
-        println!("(No remote configured - local-only mode)");
+        // No remote configured
+        if has_changes {
+            println!("\n{} Your configs are backed up locally!", "✓".green().bold());
+            println!("(No remote configured - local-only mode)");
+        } else {
+            println!("\n{} Everything up to date", "✓".green().bold());
+        }
     }
 
     Ok(())

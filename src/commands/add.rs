@@ -136,6 +136,24 @@ pub fn add(
         .context("Failed to commit changes")?;
 
     println!("{} Committed changes", "✓".green().bold());
+
+    // Push to remote if configured
+    if let Some(ref remote_config) = vault.manifest.remote {
+        let current_branch = git_repo.current_branch()
+            .unwrap_or_else(|_| remote_config.branch.clone());
+
+        match git_repo.push("origin", &current_branch) {
+            Ok(_) => {
+                println!("{} Pushed to origin/{}", "✓".green().bold(), current_branch);
+            }
+            Err(e) => {
+                eprintln!("{} Failed to push to remote: {}", "⚠".yellow().bold(), e);
+                eprintln!("Your changes are committed locally but not pushed.");
+                eprintln!("Run 'gfv backup' to retry pushing.");
+            }
+        }
+    }
+
     println!("\n{} is now managed by gfv.",
         if file_type == "directory" { "Directory" } else { "File" }
     );

@@ -39,9 +39,13 @@ pub fn restore(
         let git_repo = GitRepo::open(&vault.repo_path)
             .context("Failed to open git repository")?;
 
-        match git_repo.pull("origin", &remote_config.branch) {
+        // Get the actual current branch (it might differ from manifest)
+        let current_branch = git_repo.current_branch()
+            .unwrap_or_else(|_| remote_config.branch.clone());
+
+        match git_repo.pull("origin", &current_branch) {
             Ok(_) => {
-                println!("    {} Pulled from origin/{}", "✓".green(), remote_config.branch);
+                println!("    {} Pulled from origin/{}", "✓".green(), current_branch);
             }
             Err(e) => {
                 eprintln!("{} Failed to pull from remote: {}", "✗".red().bold(), e);

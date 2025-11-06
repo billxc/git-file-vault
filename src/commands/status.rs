@@ -34,7 +34,7 @@ pub fn status() -> Result<()> {
     println!("  Managed files: {}", vault.manifest.files.len());
 
     // Check Git status
-    let git_repo = GitRepo::open(&vault_dir)
+    let git_repo = GitRepo::open(&vault.repo_path)
         .context("Failed to open git repository")?;
 
     let has_changes = git_repo.has_changes()?;
@@ -55,7 +55,7 @@ pub fn status() -> Result<()> {
 
     for (vault_relative_path, entry) in &vault.manifest.files {
         let source_path = std::path::PathBuf::from(&entry.source_path);
-        let vault_file_path = vault_dir.join(vault_relative_path);
+        let vault_file_path = vault.get_file_path(vault_relative_path);
 
         if !source_path.exists() {
             missing_source.push(vault_relative_path.clone());

@@ -43,7 +43,7 @@ pub fn remove(
 
     // Delete from vault if requested
     if delete_files {
-        let vault_file_path = vault_dir.join(&file);
+        let vault_file_path = vault.get_file_path(&file);
 
         if vault_file_path.exists() {
             if vault_file_path.is_dir() {
@@ -63,7 +63,7 @@ pub fn remove(
     }
 
     // Commit changes
-    let git_repo = GitRepo::open(&vault_dir)
+    let git_repo = GitRepo::open(&vault.repo_path)
         .context("Failed to open git repository")?;
 
     git_repo.add_all()

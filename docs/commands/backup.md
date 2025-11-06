@@ -55,65 +55,68 @@ gfv backup --force
    - Overwrites vault versions (no conflict detection in MVP)
 
 2. **Check for changes**
-   - If no changes → "Everything up to date"
-   - If changes → Proceed to commit
+   - If changes exist → Commit them
+   - If no changes → Skip commit (but still push if needed)
 
-3. **Generate commit message**
-   - If `-m` provided → Use it
-   - Else if AI configured → Try AI generation
-   - Else → Auto-generate (e.g., "Update zsh/zshrc")
+3. **Commit changes (if any)**
+   - Stage all changes with `git add`
+   - Create commit with message (auto-generated or user-provided)
 
-4. **Commit changes**
-   - `git add` and `git commit` internally
-
-5. **Sync with remote** (only if remote configured)
-   - `git pull` to merge remote changes
-   - If Git conflict → Stop and report error
-   - If successful → `git push`
+4. **Sync with remote (if configured)**
+   - Pull from remote (only if remote branch exists)
+   - Push to remote (always, even if no new changes to commit)
+   - This ensures unpushed commits from `gfv add` get pushed
 
 ## Output Examples
 
-### Local-only
+### Local-only (with changes)
 ```
-Committing changes...
-  Message: "Update zsh/zshrc"
+==> Backing up changes...
+  ✓ Copied 2 files/directories
+  ✓ Committed locally
 
-✓ Committed to vault
-Your configs are backed up locally!
+✓ Your configs are backed up locally!
+(No remote configured - local-only mode)
+```
+
+### Local-only (no changes)
+```
+==> Backing up changes...
+  ✓ Copied 2 files/directories
+
+✓ Everything up to date
 ```
 
 ### With remote
 ```
-Backing up to remote...
-✓ Committed locally
-✓ Pulled from origin/main
-✓ Pushed to origin/main
+==> Backing up changes...
+  ✓ Copied 2 files/directories
+  ✓ Committed locally
+  ==> Syncing with remote...
+    ✓ Pulled from origin/main
+    ✓ Pushed to origin/main
 
-Your configs are backed up!
+✓ Your configs are backed up to remote!
 ```
 
-### With AI (if configured)
+### First push to new remote
 ```
-Analyzing changes...
-Suggested: "feat: add git aliases and improve zsh prompt"
+==> Backing up changes...
+  ✓ Copied 2 files/directories
+  ✓ Committed locally
+  ==> Syncing with remote...
+    → First push to remote (skipping pull)
+    ✓ Pushed to origin/main
 
-[A]ccept / [E]dit / [R]egenerate / [C]ancel? a
-
-✓ Committed and pushed
+✓ Your configs are backed up to remote!
 ```
 
 ### Git conflict (remote only)
 ```
-Error: Git conflict detected during pull
+✗ Failed to pull from remote: Git conflict detected
 
-Please resolve manually:
-  cd ~/.gfv
-  git status
-  # Resolve conflicts
-  git add .
-  git commit
-
-Then run 'gfv backup' again.
+Your changes are committed locally but not pushed.
+Resolve conflicts manually in: /Users/username/.gfv/default/repo
 ```
 
 ## AI Configuration

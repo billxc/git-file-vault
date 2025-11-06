@@ -143,6 +143,35 @@ impl GitRepo {
         }
     }
 
+    /// Check if local branch is ahead of remote (has unpushed commits)
+    pub fn has_unpushed_commits(&self, remote_name: &str, branch: &str) -> Result<bool> {
+        let local_refname = format!("refs/heads/{}", branch);
+        let remote_refname = format!("refs/remotes/{}/{}", remote_name, branch);
+
+        // Get local branch reference
+        let local_ref = self.repo.find_reference(&local_refname)
+            .context("Failed to find local branch")?;
+        let local_oid = local_ref.target().context("Local branch has no target")?;
+
+        // Get remote tracking branch reference
+        let remote_ref = match self.repo.find_reference(&remote_refname) {
+            Ok(r) => r,
+            Err(_) => return Ok(true), // Remote branch doesn't exist, so we're ahead
+        };
+        let remote_oid = remote_ref.target().context("Remote branch has no target")?;
+
+        // If OIDs are different, check if local is ahead
+        if local_oid != remote_oid {
+            // Check if local contains remote (local is ahead)
+            match self.repo.graph_descendant_of(local_oid, remote_oid) {
+                Ok(is_descendant) => Ok(is_descendant),
+                Err(_) => Ok(true), // If we can't determine, assume we're ahead
+            }
+        } else {
+            Ok(false) // Same commit, not ahead
+        }
+    }
+
     /// Add all changes to staging
     pub fn add_all(&self) -> Result<()> {
         let mut index = self.repo.index()

@@ -95,6 +95,7 @@ gfv automatically infers a sensible vault path based on common patterns:
 6. **Commit to Git**
    - `git add` the new file(s) and manifest
    - `git commit` with message: `"Add <vault-path>"`
+   - If remote configured: `git push` to remote repository
    - All transparent to user
 
 ## Output
@@ -107,6 +108,7 @@ Adding /Users/username/.zshrc
 ✓ Copied to vault
 ✓ Updated manifest
 ✓ Committed changes
+✓ Pushed to origin/main
 
 File is now managed by gfv.
 ```
@@ -191,11 +193,12 @@ With platform tag:
 
 ## Notes
 
-- **This command commits automatically** - No separate commit needed
-- Once added, use `gfv sync` to update the file content
+- **This command commits and pushes automatically** - No separate commit/push needed
+- Once added, use `gfv backup` to update the file content
 - Use `gfv remove` to stop managing a file
 - The source file remains in its original location
 - Files are copied, not moved or linked
+- If push fails, changes are still committed locally (run `gfv backup` to retry)
 
 ## Common Patterns
 
