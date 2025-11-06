@@ -193,6 +193,7 @@ This allows you to:
   - [status](./docs/commands/status.md) - Show status
   - [push](./docs/commands/push.md) - Push to remote
   - [pull](./docs/commands/pull.md) - Pull from remote
+  - [config](./docs/commands/config.md) - Manage configuration
   - [vault](./docs/commands/vault.md) - Manage multiple vaults
 
 ## Roadmap
