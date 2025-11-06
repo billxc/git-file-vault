@@ -25,6 +25,7 @@ toml = "0.8"
 
 # File operations
 walkdir = "2.5"
+dirs = "5.0"
 
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }

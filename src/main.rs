@@ -2,6 +2,7 @@ mod cli;
 mod vault;
 mod config;
 mod git_ops;
+mod commands;
 #[cfg(feature = "ai")]
 mod ai;
 mod error;

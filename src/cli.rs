@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use anyhow::Result;
+use crate::commands;
 
 #[derive(Parser)]
 #[command(name = "gfv")]
@@ -123,28 +124,28 @@ impl Cli {
     pub fn execute(self) -> Result<()> {
         match self.command {
             Commands::Init { path, remote, branch, name, no_sync } => {
-                todo!("Implement init command")
+                commands::init(path, remote, branch, name, no_sync)
             }
             Commands::Add { source, name, platform } => {
-                todo!("Implement add command")
+                commands::add(source, name, platform)
             }
             Commands::Remove { file, delete_files } => {
-                todo!("Implement remove command")
+                commands::remove(file, delete_files)
             }
             Commands::List { long } => {
-                todo!("Implement list command")
+                commands::list(long)
             }
             Commands::Status => {
-                todo!("Implement status command")
+                commands::status()
             }
             Commands::Backup { message, force, set_upstream } => {
-                todo!("Implement backup command")
+                commands::backup(message, force, set_upstream)
             }
             Commands::Restore { rebase, dry_run, force } => {
-                todo!("Implement restore command")
+                commands::restore(rebase, dry_run, force)
             }
             Commands::Config { key, value, list, unset } => {
-                todo!("Implement config command")
+                commands::config(key, value, list, unset)
             }
         }
     }

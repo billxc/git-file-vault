@@ -2,7 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::Path;
 use chrono::{DateTime, Utc};
+use anyhow::{Context, Result};
+use crate::error::VaultError;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Manifest {
@@ -42,6 +45,36 @@ impl Manifest {
             files: HashMap::new(),
             remote,
         }
+    }
+
+    /// Load manifest from .vault-manifest.json in the vault directory
+    pub fn load(vault_path: &Path) -> Result<Self> {
+        let manifest_path = vault_path.join(".vault-manifest.json");
+
+        if !manifest_path.exists() {
+            return Err(VaultError::NotInitialized(vault_path.display().to_string()).into());
+        }
+
+        let content = std::fs::read_to_string(&manifest_path)
+            .context("Failed to read manifest file")?;
+
+        let manifest: Manifest = serde_json::from_str(&content)
+            .context("Failed to parse manifest JSON")?;
+
+        Ok(manifest)
+    }
+
+    /// Save manifest to .vault-manifest.json in the vault directory
+    pub fn save(&self, vault_path: &Path) -> Result<()> {
+        let manifest_path = vault_path.join(".vault-manifest.json");
+
+        let content = serde_json::to_string_pretty(self)
+            .context("Failed to serialize manifest")?;
+
+        std::fs::write(&manifest_path, content)
+            .context("Failed to write manifest file")?;
+
+        Ok(())
     }
 
     pub fn add_file(&mut self, vault_path: String, entry: FileEntry) {
