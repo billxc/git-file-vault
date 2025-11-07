@@ -2,19 +2,18 @@
 
 use anyhow::{Context, Result};
 use std::path::PathBuf;
+use crate::config::Config;
 
 /// Get the current vault directory path
-/// For now, always returns ~/.gfv/default/
-/// TODO: Read from global config to support multiple vaults
 pub fn get_current_vault_dir() -> Result<PathBuf> {
-    let home = dirs::home_dir()
-        .context("Failed to get home directory")?;
+    let config = Config::load()?;
 
-    Ok(home.join(".gfv").join("default"))
-}
+    // If no vaults configured, use default
+    if config.vaults.is_empty() {
+        let home = dirs::home_dir()
+            .context("Failed to get home directory")?;
+        return Ok(home.join(".gfv").join("default"));
+    }
 
-/// Get the current vault name
-/// TODO: Read from global config
-pub fn get_current_vault_name() -> String {
-    "default".to_string()
+    config.get_current_vault_dir()
 }

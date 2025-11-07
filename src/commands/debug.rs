@@ -2,7 +2,6 @@
 
 use anyhow::{Context, Result};
 use colored::Colorize;
-use std::path::PathBuf;
 
 pub fn show_paths() -> Result<()> {
     let home = dirs::home_dir()
@@ -12,7 +11,7 @@ pub fn show_paths() -> Result<()> {
     println!();
 
     // Config file
-    let config_path = home.join(".gfv").join("config.toml");
+    let config_path = crate::config::Config::config_path()?;
     println!("Config file:");
     println!("  {}", config_path.display());
     if config_path.exists() {

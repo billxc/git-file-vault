@@ -319,45 +319,9 @@ pub fn remote_remove(name: Option<String>) -> Result<()> {
 }
 
 fn load_config() -> Result<Config> {
-    let home = dirs::home_dir()
-        .context("Failed to get home directory")?;
-    let config_path = home.join(".gfv").join("config.toml");
-
-    if !config_path.exists() {
-        // Return default config with empty vaults
-        return Ok(Config {
-            vaults: std::collections::HashMap::new(),
-            current: crate::config::CurrentConfig {
-                active: "default".to_string(),
-            },
-            ai: Default::default(),
-            sync: Default::default(),
-        });
-    }
-
-    let content = std::fs::read_to_string(&config_path)
-        .context("Failed to read config file")?;
-
-    let config: Config = toml::from_str(&content)
-        .context("Failed to parse config file")?;
-
-    Ok(config)
+    Config::load()
 }
 
 fn save_config(config: &Config) -> Result<()> {
-    let home = dirs::home_dir()
-        .context("Failed to get home directory")?;
-    let config_dir = home.join(".gfv");
-
-    std::fs::create_dir_all(&config_dir)
-        .context("Failed to create config directory")?;
-
-    let config_path = config_dir.join("config.toml");
-    let content = toml::to_string_pretty(config)
-        .context("Failed to serialize config")?;
-
-    std::fs::write(&config_path, content)
-        .context("Failed to write config file")?;
-
-    Ok(())
+    config.save()
 }

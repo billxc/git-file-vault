@@ -143,34 +143,7 @@ pub fn init(
 }
 
 fn add_vault_to_config(name: &str, vault_dir: &PathBuf) -> Result<()> {
-    use crate::config::Config;
-    use std::collections::HashMap;
-
-    let home = dirs::home_dir()
-        .context("Failed to get home directory")?;
-    let config_dir = home.join(".gfv");
-
-    fs::create_dir_all(&config_dir)
-        .context("Failed to create config directory")?;
-
-    let config_path = config_dir.join("config.toml");
-
-    // Load or create config
-    let mut config = if config_path.exists() {
-        let content = fs::read_to_string(&config_path)
-            .context("Failed to read config file")?;
-        toml::from_str::<Config>(&content)
-            .context("Failed to parse config file")?
-    } else {
-        Config {
-            vaults: HashMap::new(),
-            current: crate::config::CurrentConfig {
-                active: name.to_string(),
-            },
-            ai: Default::default(),
-            sync: Default::default(),
-        }
-    };
+    let mut config = crate::config::Config::load()?;
 
     // Add vault
     config.vaults.insert(name.to_string(), vault_dir.display().to_string());
@@ -181,10 +154,7 @@ fn add_vault_to_config(name: &str, vault_dir: &PathBuf) -> Result<()> {
     }
 
     // Save config
-    let content = toml::to_string_pretty(&config)
-        .context("Failed to serialize config")?;
-    fs::write(&config_path, content)
-        .context("Failed to write config file")?;
+    config.save()?;
 
     Ok(())
 }
