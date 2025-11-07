@@ -101,7 +101,7 @@ jobs:
           path: target/${{ matrix.target }}/release/${{ matrix.asset_name }}
 
   release:
-    name: Create/Update Rolling Release
+    name: Create Development Release
     needs: build
     runs-on: ubuntu-latest
 
@@ -117,24 +117,24 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
-      - name: Delete existing rolling release
-        uses: dev-drprasad/delete-tag-and-release@v1.1
-        with:
-          tag_name: rolling
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+      - name: Generate timestamp tag
+        id: timestamp
+        run: |
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "tag=dev-$TIMESTAMP" >> $GITHUB_OUTPUT
 
-      - name: Create rolling release
+      - name: Create timestamped release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rolling
-          name: Rolling Release
+          tag_name: ${{ steps.timestamp.outputs.tag }}
+          name: Development Build ${{ steps.timestamp.outputs.timestamp }}
           body: |
-            ## Latest Development Build
+            ## Development Build
 
-            This is an automatically generated release from the latest `main` branch commit.
-
+            **Build**: ${{ steps.timestamp.outputs.timestamp }}
             **Commit**: ${{ github.sha }}
+            **Branch**: ${{ github.ref_name }}
             **Build date**: ${{ github.event.head_commit.timestamp }}
 
             ### Downloads
@@ -149,8 +149,8 @@ jobs:
 
             **macOS**:
             ```bash
-            # Download
-            curl -L -O https://github.com/${{ github.repository }}/releases/download/rolling/gfv-macos-arm64
+            # Download (replace TAG with this release tag)
+            curl -L -O https://github.com/${{ github.repository }}/releases/download/${{ steps.timestamp.outputs.tag }}/gfv-macos-arm64
 
             # Make it executable
             chmod +x gfv-macos-arm64
@@ -161,7 +161,7 @@ jobs:
 
             **Linux**:
             ```bash
-            curl -L -O https://github.com/${{ github.repository }}/releases/download/rolling/gfv-linux-x86_64
+            curl -L -O https://github.com/${{ github.repository }}/releases/download/${{ steps.timestamp.outputs.tag }}/gfv-linux-x86_64
             chmod +x gfv-linux-x86_64
             sudo mv gfv-linux-x86_64 /usr/local/bin/gfv
             ```
@@ -170,7 +170,7 @@ jobs:
             Download `gfv-windows-x86_64.exe` and rename to `gfv.exe`, then add to your PATH.
 
             ---
-            *Note: This is a development build. For stable releases, see the [Releases](https://github.com/${{ github.repository }}/releases) page.*
+            *Note: This is an automated development build. For stable releases, see tagged versions.*
           files: |
             artifacts/gfv-macos-arm64/gfv-macos-arm64
             artifacts/gfv-macos-x86_64/gfv-macos-x86_64
