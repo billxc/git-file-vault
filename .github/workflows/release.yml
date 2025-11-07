@@ -81,16 +81,19 @@ jobs:
           sudo apt-get install -y gcc-aarch64-linux-gnu
           sudo apt-get install -y libssl-dev:arm64 || true
 
-      - name: Build
+      - name: Build (Linux ARM64)
+        if: matrix.platform == 'linux-arm64'
         run: cargo build --release --target ${{ matrix.target }}
         env:
-          # Set linker and OpenSSL config for ARM64 cross-compilation
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-          # Use vendored OpenSSL to avoid cross-compilation issues
           OPENSSL_STATIC: "1"
           OPENSSL_LIB_DIR: /usr/lib/aarch64-linux-gnu
           OPENSSL_INCLUDE_DIR: /usr/include
           PKG_CONFIG_ALLOW_CROSS: "1"
+
+      - name: Build (Other platforms)
+        if: matrix.platform != 'linux-arm64'
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Prepare artifact
         shell: bash
