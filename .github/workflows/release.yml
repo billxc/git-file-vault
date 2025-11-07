@@ -38,12 +38,13 @@ jobs:
             artifact_name: gfv
             asset_name: gfv-linux-x86_64
 
-          # Linux ARM64 - use ARM64 runner for native build
-          - os: ubuntu-24.04-arm64
+          # Linux ARM64 - cross-compile on x86_64
+          - os: ubuntu-latest
             platform: linux-arm64
             target: aarch64-unknown-linux-gnu
             artifact_name: gfv
             asset_name: gfv-linux-arm64
+            use_cross: true
 
           # Windows x86_64
           - os: windows-latest
@@ -69,13 +70,23 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04-arm64'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev pkg-config
 
+      - name: Install cross-compilation tool
+        if: matrix.use_cross == true
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }}
+        run: |
+          if [ "${{ matrix.use_cross }}" = "true" ]; then
+            cross build --release --target ${{ matrix.target }}
+          else
+            cargo build --release --target ${{ matrix.target }}
+          fi
+        shell: bash
 
       - name: Prepare artifact
         shell: bash
