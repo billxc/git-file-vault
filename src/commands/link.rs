@@ -28,15 +28,27 @@ pub fn link(
         .context("Failed to load vault")?;
 
     // Validate and resolve source path
+    // First expand ~ in the string before creating PathBuf
+    let source = if source.starts_with("~/") || source == "~" {
+        if let Some(home) = dirs::home_dir() {
+            if source == "~" {
+                home.display().to_string()
+            } else {
+                home.join(&source[2..]).display().to_string()
+            }
+        } else {
+            source
+        }
+    } else {
+        source
+    };
+
     let source_path = PathBuf::from(&source);
     let source_path = if source_path.is_absolute() {
         source_path
     } else {
         std::env::current_dir()?.join(&source_path)
     };
-
-    // Expand ~ if present
-    let source_path = expand_tilde(&source_path);
 
     // Infer or use provided vault path
     let vault_relative_path = if let Some(n) = name {
@@ -132,16 +144,6 @@ pub fn link(
     );
 
     Ok(())
-}
-
-/// Expand ~ to home directory
-fn expand_tilde(path: &Path) -> PathBuf {
-    if let Ok(stripped) = path.strip_prefix("~") {
-        if let Some(home) = dirs::home_dir() {
-            return home.join(stripped);
-        }
-    }
-    path.to_path_buf()
 }
 
 /// Infer vault path from source path based on common patterns
