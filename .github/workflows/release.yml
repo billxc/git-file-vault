@@ -38,8 +38,8 @@ jobs:
             artifact_name: gfv
             asset_name: gfv-linux-x86_64
 
-          # Linux ARM64
-          - os: ubuntu-latest
+          # Linux ARM64 - use ARM64 runner for native build
+          - os: ubuntu-24.04-arm64
             platform: linux-arm64
             target: aarch64-unknown-linux-gnu
             artifact_name: gfv
@@ -52,8 +52,8 @@ jobs:
             artifact_name: gfv.exe
             asset_name: gfv-windows-x86_64.exe
 
-          # Windows ARM64
-          - os: windows-latest
+          # Windows ARM64 - use ARM64 runner for native build
+          - os: windows-11-arm
             platform: windows-arm64
             target: aarch64-pc-windows-msvc
             artifact_name: gfv.exe
@@ -69,30 +69,12 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04-arm64'
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev pkg-config
 
-      # Install cross-compilation tools for Linux ARM64
-      - name: Install cross-compilation tools (Linux ARM64)
-        if: matrix.platform == 'linux-arm64'
-        run: |
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-          sudo apt-get install -y libssl-dev:arm64 || true
-
-      - name: Build (Linux ARM64)
-        if: matrix.platform == 'linux-arm64'
-        run: cargo build --release --target ${{ matrix.target }}
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-          OPENSSL_STATIC: "1"
-          OPENSSL_LIB_DIR: /usr/lib/aarch64-linux-gnu
-          OPENSSL_INCLUDE_DIR: /usr/include
-          PKG_CONFIG_ALLOW_CROSS: "1"
-
-      - name: Build (Other platforms)
-        if: matrix.platform != 'linux-arm64'
+      - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Prepare artifact
