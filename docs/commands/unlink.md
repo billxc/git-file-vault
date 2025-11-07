@@ -23,6 +23,7 @@ Unlinks a file from vault management. The file is removed from the manifest, opt
 - `--keep-source` - Keep source file (default)
 - `--delete-source` - Also delete the actual source file
 - `--force` - No confirmation prompt
+- `--vault <name>` - Specify which vault to use (default: active vault)
 
 ## Examples
 
@@ -37,6 +38,12 @@ Stops managing the file but keeps `~/.zshrc` intact.
 gfv unlink vscode/settings.json --delete-source
 ```
 ⚠️ Also deletes the actual source file.
+
+### Unlink from a specific vault
+```bash
+gfv unlink zsh/zshrc --vault work
+gfv unlink old-config --vault personal --force
+```
 
 ### Force removal (no prompt)
 ```bash

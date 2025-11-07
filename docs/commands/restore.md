@@ -22,6 +22,7 @@ Restores files from the vault to your source locations.
 - `--rebase` - Use rebase instead of merge when pulling
 - `--dry-run` - Show what would be updated without doing it
 - `--force` / `-f` - Skip warning and overwrite local changes
+- `--vault <name>` - Specify which vault to use (default: active vault)
 
 ## Examples
 
@@ -42,6 +43,12 @@ Uses `git pull --rebase` internally for cleaner history.
 gfv restore --dry-run
 ```
 Shows what files would be updated without changing anything.
+
+### Restore from a specific vault
+```bash
+gfv restore --vault work
+gfv restore --vault personal --dry-run
+```
 
 ### Force restore (skip warnings)
 ```bash

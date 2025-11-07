@@ -15,6 +15,7 @@ Displays the current sync status, Git repository status, and remote status. Help
 ## Options
 
 - `--short` / `-s` - Compact output format
+- `--vault <name>` - Specify which vault to use (default: active vault)
 
 ## Examples
 
@@ -26,6 +27,12 @@ gfv status
 ### Short format
 ```bash
 gfv status --short
+```
+
+### Check status of a specific vault
+```bash
+gfv status --vault work
+gfv status --vault personal
 ```
 
 ## Output

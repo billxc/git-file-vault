@@ -1,3 +1,4 @@
 - Do not operate git, unless I told you
 - DO NOT RUN `rm -rf ~/.gfv` COMMANDS, USE `gfv debug clean` INSTEAD
 - NEVER INCLUDE YOUR SELF IN THE GIT COMMIT MESSAGES
+- Avoid use `&&` to execute multi tasks in one line if possible. One command for one task

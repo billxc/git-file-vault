@@ -105,7 +105,7 @@ impl Config {
     }
 
     /// Get the current active vault directory
-    pub fn get_current_vault_dir(&self) -> Result<PathBuf> {
+    pub fn get_active_vault_dir(&self) -> Result<PathBuf> {
         let vault_path = self.vaults.get(&self.current.active)
             .ok_or_else(|| anyhow::anyhow!(
                 "Active vault '{}' not found in config",
@@ -113,5 +113,10 @@ impl Config {
             ))?;
 
         Ok(PathBuf::from(vault_path))
+    }
+
+    /// Get a specific vault directory by name
+    pub fn get_vault_dir(&self, name: &str) -> Option<PathBuf> {
+        self.vaults.get(name).map(|path| PathBuf::from(path))
     }
 }

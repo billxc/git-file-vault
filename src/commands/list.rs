@@ -4,11 +4,12 @@ use anyhow::{bail, Context, Result};
 use colored::Colorize;
 
 use crate::vault::Vault;
-use super::helpers::get_current_vault_dir;
+use super::helpers::{get_vault_dir, get_active_vault_name};
 
-pub fn list(long: bool) -> Result<()> {
+pub fn list(long: bool, vault: Option<String>) -> Result<()> {
     // Get vault directory
-    let vault_dir = get_current_vault_dir()?;
+    let vault_name = vault.unwrap_or_else(get_active_vault_name);
+    let vault_dir = get_vault_dir(&vault_name)?;
 
     // Check if vault is initialized
     if !Vault::is_initialized(&vault_dir) {

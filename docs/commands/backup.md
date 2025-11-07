@@ -22,6 +22,7 @@ Backs up local changes. This command automatically:
 - `--message <msg>` / `-m <msg>` - Specify commit message (bypasses AI)
 - `--force` / `-f` - Force push (dangerous, remote only!)
 - `--set-upstream` / `-u` - Set upstream branch (remote only)
+- `--vault <name>` - Specify which vault to use (default: active vault)
 
 ## Examples
 
@@ -40,6 +41,12 @@ If remote configured: also pulls and pushes.
 ### Backup with custom message
 ```bash
 gfv backup -m "Update zsh configuration"
+```
+
+### Backup to a specific vault
+```bash
+gfv backup --vault work -m "Update work configs"
+gfv backup --vault personal
 ```
 
 ### Force push (remote only)

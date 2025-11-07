@@ -4,6 +4,7 @@ use anyhow::{bail, Context, Result};
 use colored::Colorize;
 
 use crate::vault::Vault;
+use super::helpers::{get_vault_dir, get_active_vault_name};
 
 pub fn config(
     key: Option<String>,
@@ -12,7 +13,8 @@ pub fn config(
     unset: Option<String>,
 ) -> Result<()> {
     // Get vault path
-    let vault_dir = super::helpers::get_current_vault_dir()?;
+    let vault_name = get_active_vault_name();
+    let vault_dir = get_vault_dir(&vault_name)?;
     // Vault dir obtained above
 
     // Check if vault is initialized

@@ -17,6 +17,7 @@ Displays all files that are currently managed by the vault, along with their met
 - `--long` / `-l` - Show detailed information
 - `--platform <os>` - Filter by platform (macos, linux, windows)
 - `--modified` - Show only modified files
+- `--vault <name>` - Specify which vault to use (default: active vault)
 
 ## Examples
 
@@ -38,6 +39,12 @@ gfv list --platform macos
 ### Show only modified
 ```bash
 gfv list --modified
+```
+
+### List files in a specific vault
+```bash
+gfv list --vault work
+gfv list --vault personal --long
 ```
 
 ## Output

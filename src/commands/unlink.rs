@@ -6,13 +6,16 @@ use std::fs;
 
 use crate::vault::Vault;
 use crate::git_ops::GitRepo;
+use super::helpers::{get_vault_dir, get_active_vault_name};
 
 pub fn unlink(
     file: String,
     delete_files: bool,
+    vault: Option<String>,
 ) -> Result<()> {
     // Get vault path
-    let vault_dir = super::helpers::get_current_vault_dir()?;
+    let vault_name = vault.unwrap_or_else(get_active_vault_name);
+    let vault_dir = get_vault_dir(&vault_name)?;
     // Vault dir obtained above
 
     // Check if vault is initialized

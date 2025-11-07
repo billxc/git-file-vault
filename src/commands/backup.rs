@@ -6,15 +6,17 @@ use std::fs;
 
 use crate::vault::Vault;
 use crate::git_ops::GitRepo;
-use super::helpers::get_current_vault_dir;
+use super::helpers::{get_vault_dir, get_active_vault_name};
 
 pub fn backup(
     message: Option<String>,
     _force: bool,
     _set_upstream: bool,
+    vault: Option<String>,
 ) -> Result<()> {
     // Get vault directory
-    let vault_dir = get_current_vault_dir()?;
+    let vault_name = vault.unwrap_or_else(get_active_vault_name);
+    let vault_dir = get_vault_dir(&vault_name)?;
 
     // Check if vault is initialized
     if !Vault::is_initialized(&vault_dir) {

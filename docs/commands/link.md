@@ -28,6 +28,7 @@ Establishes a link in the manifest between a local file path and a vault path. T
 
 - `--name <name>` - Specify vault path (overrides auto-inference)
 - `--platform <os>` - Mark as platform-specific (`macos`, `linux`, `windows`)
+- `--vault <name>` - Specify which vault to use (default: active vault)
 
 ## Examples
 
@@ -46,6 +47,12 @@ Vault path: `nvim/`
 ### Link platform-specific file
 ```bash
 gfv link ~/.ssh/config --platform macos
+```
+
+### Link to a specific vault
+```bash
+gfv link ~/.zshrc --vault work
+gfv link ~/.gitconfig --vault personal
 ```
 
 ### Link on new device (file in vault only)

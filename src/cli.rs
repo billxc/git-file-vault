@@ -46,6 +46,10 @@ enum Commands {
         /// Platform restriction (macos, linux, windows)
         #[arg(short, long)]
         platform: Option<String>,
+
+        /// Vault name to use
+        #[arg(long)]
+        vault: Option<String>,
     },
 
     /// Unlink a file from vault
@@ -56,6 +60,10 @@ enum Commands {
         /// Also delete from vault
         #[arg(long)]
         delete_files: bool,
+
+        /// Vault name to use
+        #[arg(long)]
+        vault: Option<String>,
     },
 
     /// List managed files
@@ -63,10 +71,18 @@ enum Commands {
         /// Show detailed information
         #[arg(short, long)]
         long: bool,
+
+        /// Vault name to use
+        #[arg(long)]
+        vault: Option<String>,
     },
 
     /// Show vault status
-    Status,
+    Status {
+        /// Vault name to use
+        #[arg(long)]
+        vault: Option<String>,
+    },
 
     /// Backup changes to vault (and remote if configured)
     Backup {
@@ -81,6 +97,10 @@ enum Commands {
         /// Set upstream branch
         #[arg(short = 'u', long)]
         set_upstream: bool,
+
+        /// Vault name to use
+        #[arg(long)]
+        vault: Option<String>,
     },
 
     /// Restore files from vault (pull from remote if configured)
@@ -96,6 +116,10 @@ enum Commands {
         /// Skip warning and overwrite local changes
         #[arg(short, long)]
         force: bool,
+
+        /// Vault name to use
+        #[arg(long)]
+        vault: Option<String>,
     },
 
     /// Manage configuration
@@ -227,23 +251,23 @@ impl Cli {
             Commands::Init { path, remote, branch, name, no_sync } => {
                 commands::init(path, remote, branch, name, no_sync)
             }
-            Commands::Link { source, name, platform } => {
-                commands::link(source, name, platform)
+            Commands::Link { source, name, platform, vault } => {
+                commands::link(source, name, platform, vault)
             }
-            Commands::Unlink { file, delete_files } => {
-                commands::unlink(file, delete_files)
+            Commands::Unlink { file, delete_files, vault } => {
+                commands::unlink(file, delete_files, vault)
             }
-            Commands::List { long } => {
-                commands::list(long)
+            Commands::List { long, vault } => {
+                commands::list(long, vault)
             }
-            Commands::Status => {
-                commands::status()
+            Commands::Status { vault } => {
+                commands::status(vault)
             }
-            Commands::Backup { message, force, set_upstream } => {
-                commands::backup(message, force, set_upstream)
+            Commands::Backup { message, force, set_upstream, vault } => {
+                commands::backup(message, force, set_upstream, vault)
             }
-            Commands::Restore { rebase, dry_run, force } => {
-                commands::restore(rebase, dry_run, force)
+            Commands::Restore { rebase, dry_run, force, vault } => {
+                commands::restore(rebase, dry_run, force, vault)
             }
             Commands::Config { key, value, list, unset } => {
                 commands::config(key, value, list, unset)
