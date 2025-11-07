@@ -1,0 +1,147 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # macOS Intel
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: gfv
+            asset_name: gfv-macos-intel
+
+          # macOS Apple Silicon
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: gfv
+            asset_name: gfv-macos-arm64
+
+          # Linux x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: gfv
+            asset_name: gfv-linux-x86_64
+
+          # Windows x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: gfv.exe
+            asset_name: gfv-windows-x86_64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev pkg-config
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp ${{ matrix.artifact_name }} ${{ matrix.asset_name }}
+          else
+            cp ${{ matrix.artifact_name }} ${{ matrix.asset_name }}
+            chmod +x ${{ matrix.asset_name }}
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: target/${{ matrix.target }}/release/${{ matrix.asset_name }}
+
+  release:
+    name: Create/Update Rolling Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Delete existing rolling release
+        uses: dev-drprasad/delete-tag-and-release@v1.1
+        with:
+          tag_name: rolling
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Create rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rolling
+          name: Rolling Release
+          body: |
+            ## Latest Development Build
+
+            This is an automatically generated release from the latest `main` branch commit.
+
+            **Commit**: ${{ github.sha }}
+            **Build date**: ${{ github.event.head_commit.timestamp }}
+
+            ### Downloads
+            - **macOS Intel**: `gfv-macos-intel`
+            - **macOS Apple Silicon**: `gfv-macos-arm64`
+            - **Linux x86_64**: `gfv-linux-x86_64`
+            - **Windows x86_64**: `gfv-windows-x86_64.exe`
+
+            ### Installation
+
+            **macOS/Linux**:
+            ```bash
+            # Download the appropriate binary
+            curl -L -O https://github.com/${{ github.repository }}/releases/download/rolling/gfv-macos-arm64
+
+            # Make it executable
+            chmod +x gfv-macos-arm64
+
+            # Move to PATH (optional)
+            sudo mv gfv-macos-arm64 /usr/local/bin/gfv
+            ```
+
+            **Windows**:
+            Download `gfv-windows-x86_64.exe` and rename to `gfv.exe`, then add to your PATH.
+
+            ---
+            *Note: This is a development build. For stable releases, see the [Releases](https://github.com/${{ github.repository }}/releases) page.*
+          files: |
+            artifacts/gfv-macos-intel/gfv-macos-intel
+            artifacts/gfv-macos-arm64/gfv-macos-arm64
+            artifacts/gfv-linux-x86_64/gfv-linux-x86_64
+            artifacts/gfv-windows-x86_64.exe/gfv-windows-x86_64.exe
+          draft: false
+          prerelease: true
