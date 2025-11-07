@@ -101,6 +101,9 @@ pub fn backup(
         let current_branch = git_repo.current_branch()
             .unwrap_or_else(|_| remote_config.branch.clone());
 
+        // Try to fetch first to get remote refs (ignore errors if remote is empty/new)
+        let _ = git_repo.fetch("origin", &current_branch);
+
         // Only pull if remote branch exists (skip on first push)
         if git_repo.remote_branch_exists("origin", &current_branch) {
             match git_repo.pull("origin", &current_branch) {

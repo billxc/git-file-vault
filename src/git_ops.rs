@@ -241,6 +241,23 @@ impl GitRepo {
         Ok(())
     }
 
+    /// Fetch from remote (without merging)
+    pub fn fetch(&self, remote_name: &str, branch: &str) -> Result<()> {
+        let mut remote = self.repo.find_remote(remote_name)
+            .context("Failed to find remote")?;
+
+        // Set up authentication callbacks
+        let mut fetch_options = git2::FetchOptions::new();
+        fetch_options.remote_callbacks(Self::create_auth_callbacks());
+
+        // Fetch from remote
+        let refspec = format!("refs/heads/{}", branch);
+        remote.fetch(&[&refspec], Some(&mut fetch_options), None)
+            .context("Failed to fetch from remote")?;
+
+        Ok(())
+    }
+
     /// Pull changes from remote
     pub fn pull(&self, remote_name: &str, branch: &str) -> Result<()> {
         let mut remote = self.repo.find_remote(remote_name)

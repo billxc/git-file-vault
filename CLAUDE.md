@@ -1,1 +1,2 @@
 - Do not operate git, unless I told you
+- DO NOT RUN `rm -rf ~/.gfv` COMMANDS, USE `gfv debug clean` INSTEAD
