@@ -22,7 +22,7 @@ pub fn list(long: bool) -> Result<()> {
     // Check if empty
     if vault.manifest.files.is_empty() {
         println!("No files managed by gfv yet.");
-        println!("\nAdd files with: gfv add <file>");
+        println!("\nAdd files with: gfv link <file>");
         return Ok(());
     }
 

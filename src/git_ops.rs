@@ -105,6 +105,21 @@ impl GitRepo {
         }
     }
 
+    /// Set or update a remote URL
+    pub fn set_remote(&self, name: &str, url: &str) -> Result<()> {
+        // Check if remote exists
+        if self.repo.find_remote(name).is_ok() {
+            // Update existing remote
+            self.repo.remote_set_url(name, url)
+                .context("Failed to update remote URL")?;
+        } else {
+            // Add new remote
+            self.repo.remote(name, url)
+                .context("Failed to add remote")?;
+        }
+        Ok(())
+    }
+
     /// Check if repository has uncommitted changes
     pub fn has_changes(&self) -> Result<bool> {
         let statuses = self.repo.statuses(None)

@@ -26,7 +26,7 @@ pub fn backup(
         .context("Failed to load vault")?;
 
     if vault.manifest.files.is_empty() {
-        println!("No files to backup. Add files with 'gfv add <file>'.");
+        println!("No files to backup. Add files with 'gfv link <file>'.");
         return Ok(());
     }
 

@@ -114,6 +114,102 @@ enum Commands {
         #[arg(long)]
         unset: Option<String>,
     },
+
+    /// Manage vaults
+    Vault {
+        #[command(subcommand)]
+        command: VaultCommands,
+    },
+
+    /// Debug commands (development)
+    Debug {
+        #[command(subcommand)]
+        command: DebugCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum DebugCommands {
+    /// Show gfv paths and status
+    Paths,
+
+    /// Clean all gfv data
+    Clean {
+        /// Skip confirmation
+        #[arg(short, long)]
+        force: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum VaultCommands {
+    /// List all vaults
+    List,
+
+    /// Create a new vault
+    Create {
+        /// Vault name
+        name: String,
+
+        /// Vault path (default: ~/.gfv/<name>)
+        path: Option<String>,
+
+        /// Remote repository URL
+        #[arg(short, long)]
+        remote: Option<String>,
+    },
+
+    /// Switch to a vault
+    Switch {
+        /// Vault name
+        name: String,
+    },
+
+    /// Remove a vault
+    Remove {
+        /// Vault name
+        name: String,
+
+        /// Also delete vault directory
+        #[arg(long)]
+        delete_files: bool,
+    },
+
+    /// Show vault information
+    Info {
+        /// Vault name (default: active vault)
+        name: Option<String>,
+    },
+
+    /// Manage remote
+    Remote {
+        #[command(subcommand)]
+        command: RemoteCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum RemoteCommands {
+    /// Set remote URL
+    Set {
+        /// Remote URL
+        url: String,
+
+        /// Vault name (default: active vault)
+        name: Option<String>,
+    },
+
+    /// Get remote URL
+    Get {
+        /// Vault name (default: active vault)
+        name: Option<String>,
+    },
+
+    /// Remove remote
+    Remove {
+        /// Vault name (default: active vault)
+        name: Option<String>,
+    },
 }
 
 impl Cli {
@@ -146,6 +242,38 @@ impl Cli {
             }
             Commands::Config { key, value, list, unset } => {
                 commands::config(key, value, list, unset)
+            }
+            Commands::Vault { command } => {
+                match command {
+                    VaultCommands::List => commands::vault_list(),
+                    VaultCommands::Create { name, path, remote } => {
+                        commands::vault_create(name, path, remote)
+                    }
+                    VaultCommands::Switch { name } => commands::vault_switch(name),
+                    VaultCommands::Remove { name, delete_files } => {
+                        commands::vault_remove(name, delete_files)
+                    }
+                    VaultCommands::Info { name } => commands::vault_info(name),
+                    VaultCommands::Remote { command } => {
+                        match command {
+                            RemoteCommands::Set { url, name } => {
+                                commands::vault_remote_set(url, name)
+                            }
+                            RemoteCommands::Get { name } => {
+                                commands::vault_remote_get(name)
+                            }
+                            RemoteCommands::Remove { name } => {
+                                commands::vault_remote_remove(name)
+                            }
+                        }
+                    }
+                }
+            }
+            Commands::Debug { command } => {
+                match command {
+                    DebugCommands::Paths => commands::debug_show_paths(),
+                    DebugCommands::Clean { force } => commands::debug_clean(force),
+                }
             }
         }
     }
