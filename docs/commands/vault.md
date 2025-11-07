@@ -20,6 +20,20 @@ gfv vault <subcommand> [options]
 | `remote get [name]` | Show remote URL |
 | `info [name]` | Show vault info |
 
+## Vault Create
+
+The `create` subcommand supports the same smart remote handling and branch selection as `gfv init`.
+
+**Branch selection priority:**
+1. `--branch` flag: Explicitly specified branch name
+2. Remote default branch: When cloning from remote (uses whatever branch the remote has as default)
+3. Config default: From `~/.gfv/config.toml` (default: `main`)
+
+**Smart remote handling:**
+- If no `--remote` specified: Creates local-only vault
+- If `--remote` specified and remote is empty: Creates new vault and sets remote
+- If `--remote` specified and remote has content: Clones existing vault from remote
+
 ## Examples
 
 ### List vaults
@@ -34,7 +48,16 @@ Output:
 
 ### Create vault
 ```bash
-gfv vault create work
+# Local-only vault
+gfv vault create personal
+
+# With remote (will clone if remote has content)
+gfv vault create work --remote git@github.com:company/configs.git
+
+# With specific branch
+gfv vault create work --remote git@github.com:company/configs.git --branch develop
+
+# With custom path
 gfv vault create work ~/work/vault --remote git@github.com:company/configs.git
 ```
 

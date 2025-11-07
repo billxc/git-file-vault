@@ -21,9 +21,9 @@ enum Commands {
         #[arg(short, long)]
         remote: Option<String>,
 
-        /// Branch name
-        #[arg(short, long, default_value = "main")]
-        branch: String,
+        /// Branch name (defaults to remote default branch or config default)
+        #[arg(short, long)]
+        branch: Option<String>,
 
         /// Vault name for multi-vault support
         #[arg(short, long, default_value = "default")]
@@ -157,6 +157,10 @@ enum VaultCommands {
         /// Remote repository URL
         #[arg(short, long)]
         remote: Option<String>,
+
+        /// Branch name (defaults to remote default branch or config default)
+        #[arg(short, long)]
+        branch: Option<String>,
     },
 
     /// Switch to a vault
@@ -246,8 +250,8 @@ impl Cli {
             Commands::Vault { command } => {
                 match command {
                     VaultCommands::List => commands::vault_list(),
-                    VaultCommands::Create { name, path, remote } => {
-                        commands::vault_create(name, path, remote)
+                    VaultCommands::Create { name, path, remote, branch } => {
+                        commands::vault_create(name, path, remote, branch)
                     }
                     VaultCommands::Switch { name } => commands::vault_switch(name),
                     VaultCommands::Remove { name, delete_files } => {

@@ -2,6 +2,8 @@
 
 Initialize a vault - either brand new or from an existing remote.
 
+**Note:** `gfv init` is equivalent to `gfv vault create` with the name "default". For creating additional vaults, use `gfv vault create`.
+
 ## Synopsis
 
 ```bash
@@ -17,6 +19,11 @@ Creates a vault at the specified path (or default location). This is the single 
 - If `--remote` specified and remote is empty: Creates new vault and sets remote
 - If `--remote` specified and remote has content: Clones existing vault from remote
 
+**Branch selection priority:**
+1. `--branch` flag: Explicitly specified branch name
+2. Remote default branch: When cloning from remote (uses whatever branch the remote has as default)
+3. Config default: From `~/.gfv/config.toml` (default: `main`)
+
 **Remote repository is optional** - You can use gfv purely for local version control without any remote.
 
 This command should be run once per device before using gfv.
@@ -28,7 +35,7 @@ This command should be run once per device before using gfv.
 ## Options
 
 - `--remote <url>` - Remote repository URL (auto-detects if empty or has content)
-- `--branch <name>` - Branch name (default: `main`)
+- `--branch <name>` - Branch name (optional; defaults to remote default or config default)
 - `--name <name>` - Vault name for multi-vault support (default: `default`)
 - `--no-sync` - Don't sync files after cloning from remote (only if remote has content)
 

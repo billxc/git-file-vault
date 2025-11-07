@@ -31,18 +31,25 @@ pub struct AiConfig {
 pub struct SyncConfig {
     #[serde(default = "default_conflict_strategy")]
     pub conflict_strategy: String,
+    #[serde(default = "default_branch")]
+    pub default_branch: String,
 }
 
 impl Default for SyncConfig {
     fn default() -> Self {
         Self {
             conflict_strategy: default_conflict_strategy(),
+            default_branch: default_branch(),
         }
     }
 }
 
 fn default_conflict_strategy() -> String {
     "prompt".to_string()
+}
+
+fn default_branch() -> String {
+    "main".to_string()
 }
 
 impl Config {

@@ -33,7 +33,7 @@ pub fn list() -> Result<()> {
     Ok(())
 }
 
-pub fn create(name: String, path: Option<String>, remote: Option<String>) -> Result<()> {
+pub fn create(name: String, path: Option<String>, remote: Option<String>, branch: Option<String>) -> Result<()> {
     let mut config = load_config()?;
 
     // Check if vault already exists
@@ -42,7 +42,7 @@ pub fn create(name: String, path: Option<String>, remote: Option<String>) -> Res
     }
 
     // Determine vault path
-    let vault_path = if let Some(p) = path {
+    let vault_dir = if let Some(p) = path {
         PathBuf::from(p)
     } else {
         dirs::home_dir()
@@ -51,78 +51,198 @@ pub fn create(name: String, path: Option<String>, remote: Option<String>) -> Res
             .join(&name)
     };
 
-    let repo_path = vault_path.join("repo");
+    let repo_path = vault_dir.join("repo");
 
     // Check if vault already initialized at this path
-    if Vault::is_initialized(&vault_path) {
-        bail!("Vault already initialized at {}", vault_path.display());
+    if Vault::is_initialized(&vault_dir) {
+        bail!("Vault already initialized at {}", vault_dir.display());
     }
 
     // Create vault directory structure
-    std::fs::create_dir_all(&vault_path)
+    std::fs::create_dir_all(&vault_dir)
         .context("Failed to create vault directory")?;
     std::fs::create_dir_all(&repo_path)
         .context("Failed to create repo directory")?;
 
-    // Initialize Git repository
-    let git_repo = crate::git_ops::GitRepo::init(&repo_path)
-        .context("Failed to initialize Git repository")?;
+    println!("{} Initializing vault '{}'...", "==>".green().bold(), name);
+    println!("  Vault dir: {}", vault_dir.display());
+    println!("  Repo dir: {}", repo_path.display());
 
-    // Create manifest
-    let remote_config = if let Some(url) = &remote {
-        Some(crate::vault::manifest::RemoteConfig {
-            url: url.clone(),
-            branch: "main".to_string(),
-        })
-    } else {
-        None
-    };
+    // Handle three scenarios based on documentation
+    if let Some(remote_url) = remote {
+        // Check if remote is empty or has content by attempting to clone
+        println!("{} Checking remote repository...", "==>".green().bold());
 
-    let manifest = crate::vault::manifest::Manifest::new(remote_config);
-    manifest.save(&vault_path)
-        .context("Failed to save manifest")?;
+        // Try to clone into repo directory
+        match crate::git_ops::GitRepo::clone(&remote_url, &repo_path) {
+            Ok(git_repo) => {
+                // Remote has content - use cloned repository
+                println!("{} Cloned existing vault from remote", "✓".green().bold());
 
-    // Create initial commit
-    git_repo.add_all()
-        .context("Failed to stage initial files")?;
-    git_repo.commit("Initial commit")
-        .context("Failed to create initial commit")?;
+                // Branch selection priority:
+                // 1. User specified --branch
+                // 2. Remote default branch (what we just cloned)
+                let selected_branch = if let Some(user_branch) = branch {
+                    // User specified a branch
+                    git_repo.set_branch(&user_branch)
+                        .context("Failed to set branch name")?;
+                    user_branch
+                } else {
+                    // Use the remote default branch (current branch after clone)
+                    git_repo.current_branch()
+                        .context("Failed to get current branch")?
+                };
 
-    // Set up remote if provided
-    if let Some(url) = &remote {
-        git_repo.add_remote("origin", url)
-            .context("Failed to add remote")?;
+                // Load or create manifest
+                let mut manifest = crate::vault::manifest::Manifest::load(&vault_dir)?;
 
-        // Try to push
-        match git_repo.push("origin", "main") {
-            Ok(_) => {
-                println!("{} Pushed to remote", "✓".green().bold());
+                // Ensure manifest has remote config
+                if manifest.remote.is_none() {
+                    manifest.remote = Some(crate::vault::manifest::RemoteConfig {
+                        url: remote_url.clone(),
+                        branch: selected_branch.clone(),
+                    });
+                    manifest.save(&vault_dir)
+                        .context("Failed to save manifest")?;
+                }
+
+                println!("{} Vault '{}' initialized successfully!", "✓".green().bold(), name);
+                println!("  Remote: {}", remote_url);
+                println!("  Branch: {}", selected_branch);
+                println!("  Files: {}", manifest.files.len());
+
+                // Add to config
+                config.vaults.insert(name.clone(), vault_dir.display().to_string());
+
+                // If this is the first vault, make it active
+                if config.vaults.len() == 1 {
+                    config.current.active = name.clone();
+                }
+
+                save_config(&config)?;
+
+                if config.current.active == name {
+                    println!("\n{} This is now the active vault", "→".blue());
+                }
             }
-            Err(e) => {
-                eprintln!("{} Failed to push to remote: {}", "⚠".yellow().bold(), e);
-                eprintln!("You can push later with: gfv backup");
+            Err(_) => {
+                // Remote is empty or doesn't exist - create new vault and push
+                println!("{} Remote is empty, creating new vault...", "==>".green().bold());
+
+                // Remove the failed clone directory and recreate
+                std::fs::remove_dir_all(&repo_path).ok();
+                std::fs::create_dir_all(&repo_path)?;
+
+                // Branch selection priority:
+                // 1. User specified --branch
+                // 2. Config default branch
+                let selected_branch = branch.unwrap_or_else(|| config.sync.default_branch.clone());
+
+                // Initialize Git repository
+                let git_repo = crate::git_ops::GitRepo::init(&repo_path)
+                    .context("Failed to initialize Git repository")?;
+
+                // Create manifest with remote config
+                let remote_config = crate::vault::manifest::RemoteConfig {
+                    url: remote_url.clone(),
+                    branch: selected_branch.clone(),
+                };
+                let manifest = crate::vault::manifest::Manifest::new(Some(remote_config));
+
+                // Save manifest
+                manifest.save(&vault_dir)
+                    .context("Failed to save manifest")?;
+
+                // Create a .gitignore in repo to avoid accidentally committing local files
+                let gitignore_path = repo_path.join(".gitignore");
+                std::fs::write(&gitignore_path, "# Git-file-vault managed repository\n")?;
+
+                // Add and commit
+                git_repo.add_all()
+                    .context("Failed to add files")?;
+                git_repo.commit("Initialize vault")
+                    .context("Failed to commit")?;
+
+                // Set the branch name
+                git_repo.set_branch(&selected_branch)
+                    .context("Failed to set branch name")?;
+
+                // Add remote and push
+                git_repo.add_remote("origin", &remote_url)
+                    .context("Failed to add remote")?;
+                git_repo.push("origin", &selected_branch)
+                    .context("Failed to push to remote")?;
+
+                println!("{} Vault '{}' initialized and pushed to remote!", "✓".green().bold(), name);
+                println!("  Remote: {}", remote_url);
+                println!("  Branch: {}", selected_branch);
+
+                // Add to config
+                config.vaults.insert(name.clone(), vault_dir.display().to_string());
+
+                // If this is the first vault, make it active
+                if config.vaults.len() == 1 {
+                    config.current.active = name.clone();
+                }
+
+                save_config(&config)?;
+
+                if config.current.active == name {
+                    println!("\n{} This is now the active vault", "→".blue());
+                }
             }
         }
-    }
+    } else {
+        // No remote - local-only vault
+        println!("{} Creating local-only vault...", "==>".green().bold());
 
-    // Add to config
-    config.vaults.insert(name.clone(), vault_path.display().to_string());
+        // Branch selection priority:
+        // 1. User specified --branch
+        // 2. Config default branch
+        let selected_branch = branch.unwrap_or_else(|| config.sync.default_branch.clone());
 
-    // If this is the first vault, make it active
-    if config.vaults.len() == 1 {
-        config.current.active = name.clone();
-    }
+        // Initialize Git repository
+        let git_repo = crate::git_ops::GitRepo::init(&repo_path)
+            .context("Failed to initialize Git repository")?;
 
-    save_config(&config)?;
+        // Create manifest
+        let manifest = crate::vault::manifest::Manifest::new(None);
 
-    println!("{} Created vault '{}'", "✓".green().bold(), name);
-    println!("  Path: {}", vault_path.display());
-    if let Some(url) = remote {
-        println!("  Remote: {}", url);
-    }
+        // Save manifest
+        manifest.save(&vault_dir)
+            .context("Failed to save manifest")?;
 
-    if config.current.active == name {
-        println!("\n{} This is now the active vault", "→".blue());
+        // Create a .gitignore in repo
+        let gitignore_path = repo_path.join(".gitignore");
+        std::fs::write(&gitignore_path, "# Git-file-vault managed repository\n")?;
+
+        // Add and commit
+        git_repo.add_all()
+            .context("Failed to add .gitignore")?;
+        git_repo.commit("Initialize vault")
+            .context("Failed to commit")?;
+
+        // Set branch
+        git_repo.set_branch(&selected_branch)
+            .context("Failed to set branch name")?;
+
+        println!("{} Vault '{}' initialized successfully!", "✓".green().bold(), name);
+        println!("  Mode: Local-only (no remote)");
+        println!("  Branch: {}", selected_branch);
+
+        // Add to config
+        config.vaults.insert(name.clone(), vault_dir.display().to_string());
+
+        // If this is the first vault, make it active
+        if config.vaults.len() == 1 {
+            config.current.active = name.clone();
+        }
+
+        save_config(&config)?;
+
+        if config.current.active == name {
+            println!("\n{} This is now the active vault", "→".blue());
+        }
     }
 
     Ok(())
