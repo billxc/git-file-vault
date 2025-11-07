@@ -34,8 +34,8 @@ enum Commands {
         no_sync: bool,
     },
 
-    /// Add a file to vault
-    Add {
+    /// Link a file to vault
+    Link {
         /// Source file path
         source: String,
 
@@ -48,8 +48,8 @@ enum Commands {
         platform: Option<String>,
     },
 
-    /// Remove a file from vault
-    Remove {
+    /// Unlink a file from vault
+    Unlink {
         /// Vault file path
         file: String,
 
@@ -126,11 +126,11 @@ impl Cli {
             Commands::Init { path, remote, branch, name, no_sync } => {
                 commands::init(path, remote, branch, name, no_sync)
             }
-            Commands::Add { source, name, platform } => {
-                commands::add(source, name, platform)
+            Commands::Link { source, name, platform } => {
+                commands::link(source, name, platform)
             }
-            Commands::Remove { file, delete_files } => {
-                commands::remove(file, delete_files)
+            Commands::Unlink { file, delete_files } => {
+                commands::unlink(file, delete_files)
             }
             Commands::List { long } => {
                 commands::list(long)

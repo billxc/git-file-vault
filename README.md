@@ -39,9 +39,9 @@ Perfect for local version control without remote sync:
 gfv init
 
 # 2. Add config files
-gfv add ~/.zshrc
-gfv add ~/.gitconfig
-gfv add ~/.config/nvim
+gfv link ~/.zshrc
+gfv link ~/.gitconfig
+gfv link ~/.config/nvim
 
 # 3. Keep files synced
 gfv backup
@@ -59,9 +59,9 @@ For syncing configs across multiple devices:
 gfv init --remote git@github.com:username/my-configs.git
 
 # 2. Add your config files
-gfv add ~/.zshrc
-gfv add ~/.config/nvim
-gfv add ~/.gitconfig
+gfv link ~/.zshrc
+gfv link ~/.config/nvim
+gfv link ~/.gitconfig
 
 # 3. Push to remote
 gfv backup
@@ -83,8 +83,8 @@ That's it! Your config files are now synced across devices.
 gfv init
 
 # Add files to vault
-gfv add ~/.zshrc
-gfv add ~/.config/alacritty --name alacritty
+gfv link ~/.zshrc
+gfv link ~/.config/alacritty --name alacritty
 
 # List managed files
 gfv list
@@ -105,7 +105,7 @@ gfv backup -m "Update zsh config"
 gfv restore
 
 # Remove file from vault
-gfv remove zsh/zshrc
+gfv unlink zsh/zshrc
 ```
 
 ### Platform-Specific Files
@@ -113,8 +113,8 @@ gfv remove zsh/zshrc
 Mark files as platform-specific:
 
 ```bash
-gfv add ~/.zshrc --platform macos
-gfv add ~/.bashrc --platform linux
+gfv link ~/.zshrc --platform macos
+gfv link ~/.bashrc --platform linux
 ```
 
 Files with platform tags will only sync on matching platforms.
@@ -184,8 +184,8 @@ This allows you to:
 ### Current Limitations
 
 **Cross-Device Workflow:**
-- `gfv add` automatically pushes to remote (cannot defer push)
-- `gfv remove` doesn't push to remote (requires manual `gfv backup`)
+- `gfv link` automatically pushes to remote (cannot defer push)
+- `gfv unlink` doesn't push to remote (requires manual `gfv backup`)
 - When initializing from existing remote on a new device, local files may differ from repo
 - No conflict detection when adding files that exist in remote with different content
 
@@ -199,7 +199,7 @@ Current workaround for cross-device setup:
 # On new device after init:
 gfv restore ~/.zshrc    # Get remote version first
 # Review differences before adding
-gfv add ~/.zshrc        # This will push immediately
+gfv link ~/.zshrc        # This will push immediately
 ```
 
 ## Documentation
@@ -207,8 +207,8 @@ gfv add ~/.zshrc        # This will push immediately
 - **[Design Overview](./docs/OVERVIEW.md)** - Architecture and design principles
 - **Command Reference:**
   - [init](./docs/commands/init.md) - Initialize a vault
-  - [add](./docs/commands/add.md) - Add files to vault
-  - [remove](./docs/commands/remove.md) - Remove files from vault
+  - [link](./docs/commands/link.md) - Link files to vault
+  - [unlink](./docs/commands/unlink.md) - Unlink files from vault
   - [list](./docs/commands/list.md) - List managed files
   - [status](./docs/commands/status.md) - Show status
   - [backup](./docs/commands/backup.md) - Backup to remote

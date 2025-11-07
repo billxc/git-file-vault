@@ -136,7 +136,7 @@ Initializing vault at /Users/username/.gfv
 ✓ Vault ready!
 
 Next steps:
-  gfv add <file>    # Add files to vault
+  gfv link <file>    # Add files to vault
 ```
 
 ### Empty remote (first device)
@@ -149,7 +149,7 @@ Initializing vault at /Users/username/.gfv
 ✓ Vault ready!
 
 Next steps:
-  gfv add <file>    # Add files to vault
+  gfv link <file>    # Add files to vault
   gfv backup          # Push to remote
 ```
 
@@ -247,7 +247,7 @@ Thumbs.db
 
 ## See Also
 
-- [add.md](./add.md) - Add files to vault after initialization
+- [link.md](./link.md) - Add files to vault after initialization
 - [backup.md](./backup.md) - Push to remote
 - [restore.md](./restore.md) - Pull updates from remote
 - [OVERVIEW.md](../OVERVIEW.md) - General design overview

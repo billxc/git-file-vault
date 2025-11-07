@@ -87,7 +87,7 @@ gitconfig               ~/.gitconfig                    modified
 No files managed yet.
 
 Add files with:
-  gfv add <file>
+  gfv link <file>
 ```
 
 ## Information Displayed
@@ -155,7 +155,7 @@ gfv list | wc -l
 
 ## See Also
 
-- [add.md](./add.md) - Add files to vault
-- [remove.md](./remove.md) - Remove files from vault
+- [link.md](./link.md) - Add files to vault
+- [unlink.md](./unlink.md) - Remove files from vault
 - [status.md](./status.md) - Check sync status
 - [OVERVIEW.md](../OVERVIEW.md) - Manifest format

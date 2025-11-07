@@ -1,4 +1,4 @@
-// Remove command implementation
+// Unlink command implementation
 
 use anyhow::{bail, Context, Result};
 use colored::Colorize;
@@ -7,7 +7,7 @@ use std::fs;
 use crate::vault::Vault;
 use crate::git_ops::GitRepo;
 
-pub fn remove(
+pub fn unlink(
     file: String,
     delete_files: bool,
 ) -> Result<()> {
@@ -29,7 +29,7 @@ pub fn remove(
         bail!("File '{}' is not managed by gfv.\n\nList managed files with: gfv list", file);
     }
 
-    println!("{} Removing {} from vault...", "==>".green().bold(), file);
+    println!("{} Unlinking {} from vault...", "==>".green().bold(), file);
 
     // Remove from manifest
     let entry = vault.manifest.remove_file(&file)
@@ -69,7 +69,7 @@ pub fn remove(
     git_repo.add_all()
         .context("Failed to stage changes")?;
 
-    let commit_message = format!("Remove {}", file);
+    let commit_message = format!("Unlink {}", file);
     git_repo.commit(&commit_message)
         .context("Failed to commit changes")?;
 

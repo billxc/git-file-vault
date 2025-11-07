@@ -2,23 +2,23 @@
 
 ## High Priority - Cross-Device Scenarios
 
-### 1. Add `--no-push` flag to `gfv add` command
-**Problem**: When initializing from an existing remote on a new machine, the local files and repo files may differ. Currently `gfv add` automatically pushes, which would overwrite the remote state.
+### 1. Add `--no-push` flag to `gfv link` command
+**Problem**: When initializing from an existing remote on a new machine, the local files and repo files may differ. Currently `gfv link` automatically pushes, which would overwrite the remote state.
 
 **Scenario**:
 ```bash
 # Machine A: Create vault and add files
 gfv init --remote https://github.com/user/vault
-gfv add ~/.zshrc  # Pushes to remote
+gfv link ~/.zshrc  # Pushes to remote
 
 # Machine B: Clone vault
 gfv init --remote https://github.com/user/vault  # Clones existing repo
-gfv add ~/.zshrc  # Currently would push immediately, overwriting Machine A's version
+gfv link ~/.zshrc  # Currently would push immediately, overwriting Machine A's version
 ```
 
 **Solution**: Add `--no-push` flag to allow adding files without immediate push:
 ```bash
-gfv add ~/.zshrc --no-push  # Just commit locally
+gfv link ~/.zshrc --no-push  # Just commit locally
 gfv backup  # User decides when to push
 ```
 
@@ -28,14 +28,14 @@ gfv backup  # User decides when to push
 - Skip push step if flag is set
 - Update documentation
 
-### 2. Add `--keep-files` option to `gfv remove` command
-**Problem**: Currently `gfv remove` requires `--delete-files` flag. The default behavior should be configurable.
+### 2. Add `--keep-files` option to `gfv unlink` command
+**Problem**: Currently `gfv unlink` requires `--delete-files` flag. The default behavior should be configurable.
 
 **Scenario**:
 ```bash
 # User wants to stop managing a file but keep it in vault
-gfv remove config/app.conf --keep-files  # Remove from manifest, keep in repo
-gfv remove config/app.conf --delete-files  # Remove from manifest and repo
+gfv unlink config/app.conf --keep-files  # Remove from manifest, keep in repo
+gfv unlink config/app.conf --delete-files  # Remove from manifest and repo
 ```
 
 **Current behavior**:
@@ -44,7 +44,7 @@ gfv remove config/app.conf --delete-files  # Remove from manifest and repo
 
 **Solution**: Add `--no-push` flag to `remove` command:
 ```bash
-gfv remove test/file.txt --delete-files --no-push  # Remove but don't push yet
+gfv unlink test/file.txt --delete-files --no-push  # Remove but don't push yet
 ```
 
 ## Medium Priority - Multi-Machine Workflow
@@ -54,7 +54,7 @@ gfv remove test/file.txt --delete-files --no-push  # Remove but don't push yet
 
 **Solution**:
 ```bash
-gfv add ~/.zshrc
+gfv link ~/.zshrc
 # Warning: File exists in remote vault with different content
 # Remote version: 2.3 KB, modified 2 days ago
 # Local version: 1.8 KB, modified today
@@ -97,7 +97,7 @@ gfv config auto_push prompt # Prompt user each time
 
 ### 7. Batch operations
 ```bash
-gfv add ~/.zshrc ~/.gitconfig ~/.vimrc --no-push  # Add multiple files
+gfv link ~/.zshrc ~/.gitconfig ~/.vimrc --no-push  # Add multiple files
 gfv backup --batch  # Push all pending changes at once
 ```
 
@@ -135,8 +135,8 @@ Document the recommended workflow for using gfv across multiple machines:
 **Initial setup on Machine A**:
 ```bash
 gfv init --remote https://github.com/user/vault
-gfv add ~/.zshrc
-gfv add ~/.gitconfig
+gfv link ~/.zshrc
+gfv link ~/.gitconfig
 # Files automatically pushed
 ```
 
@@ -148,7 +148,7 @@ gfv restore ~/.gitconfig
 
 # If local files differ from remote:
 gfv diff ~/.zshrc       # Compare differences
-gfv add ~/.zshrc --no-push  # Add local version without pushing
+gfv link ~/.zshrc --no-push  # Add local version without pushing
 # ... review all differences
 gfv backup              # Push all changes when ready
 ```

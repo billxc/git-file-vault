@@ -275,7 +275,7 @@ Your choice:
 Files can be optionally marked as platform-specific:
 
 ```bash
-gfv add ~/.zshrc --platform macos
+gfv link ~/.zshrc --platform macos
 ```
 
 **Behavior:**
@@ -317,7 +317,7 @@ gfv config ai.api_key sk-xxxxx
 ```bash
 gfv init --name work ~/.work-vault
 gfv vault switch work
-gfv add ~/.ssh/work_config --vault work
+gfv link ~/.ssh/work_config --vault work
 ```
 
 ---
@@ -352,7 +352,7 @@ gfv add ~/.ssh/work_config --vault work
 ```
 Error: Source file not found: /Users/username/.zshrc
 Hint: The file may have been moved or deleted. Remove it from vault with:
-  gfv remove zsh/zshrc
+  gfv unlink zsh/zshrc
 ```
 
 ```
@@ -368,8 +368,8 @@ Run 'gfv init' to create a new vault.
 
 | User Command | User-Facing Behavior | Internal Git Operations |
 |--------------|---------------------|-------------------------|
-| `gfv add` | Start managing a file | git add + git commit |
-| `gfv remove` | Stop managing a file | git rm + git commit |
+| `gfv link` | Start managing a file | git add + git commit |
+| `gfv unlink` | Stop managing a file | git rm + git commit |
 | `gfv sync` | Bidirectional sync | sync to-vault + git commit + git pull + sync from-vault |
 | `gfv backup` | Upload changes | sync to-vault + git commit + git push |
 | `gfv restore` | Download changes | git pull + sync from-vault |

@@ -1,16 +1,14 @@
-// Add command implementation
+// Link command implementation
 
 use anyhow::{bail, Context, Result};
 use colored::Colorize;
 use std::path::{Path, PathBuf};
-use std::fs;
 use chrono::Utc;
 
 use crate::vault::{Vault, manifest::FileEntry};
-use crate::git_ops::GitRepo;
 use super::helpers::get_current_vault_dir;
 
-pub fn add(
+pub fn link(
     source: String,
     name: Option<String>,
     platform: Option<String>,
@@ -38,17 +36,6 @@ pub fn add(
     // Expand ~ if present
     let source_path = expand_tilde(&source_path);
 
-    if !source_path.exists() {
-        bail!("Source file not found: {}", source_path.display());
-    }
-
-    // Determine if it's a file or directory
-    let file_type = if source_path.is_dir() {
-        "directory"
-    } else {
-        "file"
-    };
-
     // Infer or use provided vault path
     let vault_relative_path = if let Some(n) = name {
         n
@@ -65,8 +52,31 @@ pub fn add(
         );
     }
 
-    // Check for sensitive files
-    if is_sensitive_file(&source_path) {
+    // Get vault file path
+    let vault_file_path = vault.get_file_path(&vault_relative_path);
+
+    // Check existence in both locations
+    let exists_locally = source_path.exists();
+    let exists_in_vault = vault_file_path.exists();
+
+    // Must exist in at least one place
+    if !exists_locally && !exists_in_vault {
+        bail!(
+            "File not found in either location:\n  Local: {}\n  Vault: {}",
+            source_path.display(),
+            vault_file_path.display()
+        );
+    }
+
+    // Determine file type from whichever exists
+    let file_type = if exists_locally {
+        if source_path.is_dir() { "directory" } else { "file" }
+    } else {
+        if vault_file_path.is_dir() { "directory" } else { "file" }
+    };
+
+    // Check for sensitive files (only if exists locally)
+    if exists_locally && is_sensitive_file(&source_path) {
         println!("{} Potentially sensitive file detected", "Warning:".yellow().bold());
         println!("  {}", source_path.display());
         println!("\nThis file may contain secrets or credentials.");
@@ -81,7 +91,7 @@ pub fn add(
         }
     }
 
-    println!("{} Adding {} {}",
+    println!("{} Linking {} {}",
         "==>".green().bold(),
         source_path.display(),
         if file_type == "directory" { "(directory)" } else { "" }
@@ -89,24 +99,15 @@ pub fn add(
     println!("  Vault path: {}", vault_relative_path);
     println!("  Platform: {}", platform.as_deref().unwrap_or("all"));
 
-    // Copy file/directory to vault repo
-    let vault_file_path = vault.get_file_path(&vault_relative_path);
-
-    // Create parent directories if needed
-    if let Some(parent) = vault_file_path.parent() {
-        fs::create_dir_all(parent)
-            .context("Failed to create vault directories")?;
+    if exists_locally && !exists_in_vault {
+        println!("{} File exists locally but not in vault", "→".blue());
+        println!("   Use 'gfv backup' to upload it");
+    } else if !exists_locally && exists_in_vault {
+        println!("{} File exists in vault but not locally", "→".blue());
+        println!("   Use 'gfv restore' to download it");
+    } else if exists_locally && exists_in_vault {
+        println!("{} File exists in both locations", "→".blue());
     }
-
-    if source_path.is_dir() {
-        copy_dir_recursive(&source_path, &vault_file_path)
-            .context("Failed to copy directory to vault")?;
-    } else {
-        fs::copy(&source_path, &vault_file_path)
-            .context("Failed to copy file to vault")?;
-    }
-
-    println!("{} Copied to vault", "✓".green().bold());
 
     // Create manifest entry
     let entry = FileEntry {
@@ -114,7 +115,7 @@ pub fn add(
         file_type: file_type.to_string(),
         platform,
         added_at: Utc::now(),
-        last_sync: Some(Utc::now()),
+        last_sync: None,  // No sync yet, just linking
     };
 
     // Update manifest
@@ -123,36 +124,6 @@ pub fn add(
         .context("Failed to save manifest")?;
 
     println!("{} Updated manifest", "✓".green().bold());
-
-    // Commit changes to repo
-    let git_repo = GitRepo::open(&vault.repo_path)
-        .context("Failed to open git repository")?;
-
-    git_repo.add_all()
-        .context("Failed to stage changes")?;
-
-    let commit_message = format!("Add {}", vault_relative_path);
-    git_repo.commit(&commit_message)
-        .context("Failed to commit changes")?;
-
-    println!("{} Committed changes", "✓".green().bold());
-
-    // Push to remote if configured
-    if let Some(ref remote_config) = vault.manifest.remote {
-        let current_branch = git_repo.current_branch()
-            .unwrap_or_else(|_| remote_config.branch.clone());
-
-        match git_repo.push("origin", &current_branch) {
-            Ok(_) => {
-                println!("{} Pushed to origin/{}", "✓".green().bold(), current_branch);
-            }
-            Err(e) => {
-                eprintln!("{} Failed to push to remote: {}", "⚠".yellow().bold(), e);
-                eprintln!("Your changes are committed locally but not pushed.");
-                eprintln!("Run 'gfv backup' to retry pushing.");
-            }
-        }
-    }
 
     println!("\n{} is now managed by gfv.",
         if file_type == "directory" { "Directory" } else { "File" }
@@ -232,24 +203,4 @@ fn is_sensitive_file(path: &Path) -> bool {
     path_str.ends_with(".key") ||
     path_str.ends_with(".pem") ||
     path_str.contains("password")
-}
-
-/// Recursively copy directory
-fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
-    fs::create_dir_all(dst)?;
-
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let file_type = entry.file_type()?;
-        let src_path = entry.path();
-        let dst_path = dst.join(entry.file_name());
-
-        if file_type.is_dir() {
-            copy_dir_recursive(&src_path, &dst_path)?;
-        } else {
-            fs::copy(&src_path, &dst_path)?;
-        }
-    }
-
-    Ok(())
 }

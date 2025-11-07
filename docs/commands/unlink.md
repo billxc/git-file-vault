@@ -1,18 +1,18 @@
-# `gfv remove` - Remove File from Vault
+# `gfv unlink` - Unlink File from Vault
 
 Stop managing a file or directory.
 
 ## Synopsis
 
 ```bash
-gfv remove <vault-path> [options]
+gfv unlink <vault-path> [options]
 ```
 
 ## Description
 
-Removes a file from vault management. The file is removed from the manifest, deleted from the vault, and committed to Git.
+Unlinks a file from vault management. The file is removed from the manifest, optionally deleted from the vault, and changes are committed to Git.
 
-**Important:** This does NOT delete your actual source file by default.
+**Important:** This does NOT delete your actual source file - only breaks the management link.
 
 ## Arguments
 
@@ -28,19 +28,19 @@ Removes a file from vault management. The file is removed from the manifest, del
 
 ### Remove from vault only
 ```bash
-gfv remove zsh/zshrc
+gfv unlink zsh/zshrc
 ```
 Stops managing the file but keeps `~/.zshrc` intact.
 
 ### Remove and delete source
 ```bash
-gfv remove vscode/settings.json --delete-source
+gfv unlink vscode/settings.json --delete-source
 ```
 ⚠️ Also deletes the actual source file.
 
 ### Force removal (no prompt)
 ```bash
-gfv remove old-config --force
+gfv unlink old-config --force
 ```
 
 ## Behavior
@@ -141,8 +141,8 @@ Removing: zsh/zshrc (forced)
 
 | Command | Effect on Vault | Effect on Source |
 |---------|-----------------|------------------|
-| `gfv remove` | Deletes | Keeps (default) |
-| `gfv remove --delete-source` | Deletes | Deletes ⚠️ |
+| `gfv unlink` | Deletes | Keeps (default) |
+| `gfv unlink --delete-source` | Deletes | Deletes ⚠️ |
 | Manual delete of source | No change | Deleted |
 
 ## Recovery
@@ -152,7 +152,7 @@ If you accidentally remove a file:
 ### Restore from vault (if source still exists)
 ```bash
 # If you kept the source file:
-gfv add ~/.zshrc
+gfv link ~/.zshrc
 ```
 
 ### Restore from Git history
@@ -167,25 +167,25 @@ git checkout <commit-hash>~1 -- <vault-path>
 
 ### Stop managing a file
 ```bash
-gfv remove old-config
+gfv unlink old-config
 # Source file kept, vault cleaned up
 ```
 
 ### Clean up after moving file
 ```bash
 # You moved ~/.zshrc to ~/.zsh/zshrc
-gfv remove zsh/zshrc
-gfv add ~/.zsh/zshrc
+gfv unlink zsh/zshrc
+gfv link ~/.zsh/zshrc
 ```
 
 ### Remove platform-specific file
 ```bash
 # Removing a macOS-only file
-gfv remove ssh/config-macos
+gfv unlink ssh/config-macos
 ```
 
 ## See Also
 
-- [add.md](./add.md) - Add files to vault
+- [link.md](./link.md) - Add files to vault
 - [list.md](./list.md) - List managed files
 - [OVERVIEW.md](../OVERVIEW.md) - Architecture

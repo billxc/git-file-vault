@@ -65,7 +65,7 @@ gfv backup --force
 4. **Sync with remote (if configured)**
    - Pull from remote (only if remote branch exists)
    - Push to remote (always, even if no new changes to commit)
-   - This ensures unpushed commits from `gfv add` get pushed
+   - This ensures unpushed commits from `gfv link` get pushed
 
 ## Output Examples
 
@@ -146,14 +146,14 @@ export OPENAI_API_KEY=sk-xxxxx
 ## Notes
 
 - Works with or without remote
-- No need to manually run `gfv add` before backup
+- No need to manually run `gfv link` before backup
 - Automatically handles simple Git merges (when remote configured)
 - AI generation is completely optional
 - Use `--force` only when certain (e.g., after rebase)
 
 ## See Also
 
-- [add.md](./add.md) - Add new files to vault
+- [link.md](./link.md) - Add new files to vault
 - [restore.md](./restore.md) - Restore from vault
 - [status.md](./status.md) - Check what changed
 - [config.md](./config.md) - Configure AI
