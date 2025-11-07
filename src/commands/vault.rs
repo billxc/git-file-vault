@@ -364,7 +364,7 @@ pub fn info(name: Option<String>) -> Result<()> {
     Ok(())
 }
 
-pub fn remote_set(url: String, name: Option<String>) -> Result<()> {
+pub fn set_remote(url: String, branch: Option<String>, name: Option<String>) -> Result<()> {
     let config = load_config()?;
     let vault_name = name.unwrap_or_else(|| config.current.active.clone());
 
@@ -375,10 +375,21 @@ pub fn remote_set(url: String, name: Option<String>) -> Result<()> {
     let vault_path = PathBuf::from(&config.vaults[&vault_name]);
     let mut vault = Vault::load(&vault_path)?;
 
+    // Determine branch: use provided, or keep existing, or default to "main"
+    let branch_name = if let Some(b) = branch {
+        b
+    } else if let Some(ref remote) = vault.manifest.remote {
+        remote.branch.clone()
+    } else {
+        // Try to get current branch from git repo
+        let git_repo = crate::git_ops::GitRepo::open(&vault.repo_path)?;
+        git_repo.current_branch().unwrap_or_else(|_| "main".to_string())
+    };
+
     // Update remote in manifest
     vault.manifest.remote = Some(crate::vault::manifest::RemoteConfig {
         url: url.clone(),
-        branch: "main".to_string(),
+        branch: branch_name.clone(),
     });
 
     vault.save_manifest()?;
@@ -389,11 +400,12 @@ pub fn remote_set(url: String, name: Option<String>) -> Result<()> {
 
     println!("{} Set remote for vault '{}'", "✓".green().bold(), vault_name);
     println!("  URL: {}", url);
+    println!("  Branch: {}", branch_name);
 
     Ok(())
 }
 
-pub fn remote_get(name: Option<String>) -> Result<()> {
+pub fn set_branch(branch: String, name: Option<String>) -> Result<()> {
     let config = load_config()?;
     let vault_name = name.unwrap_or_else(|| config.current.active.clone());
 
@@ -402,19 +414,27 @@ pub fn remote_get(name: Option<String>) -> Result<()> {
     }
 
     let vault_path = PathBuf::from(&config.vaults[&vault_name]);
-    let vault = Vault::load(&vault_path)?;
+    let mut vault = Vault::load(&vault_path)?;
 
-    if let Some(remote) = &vault.manifest.remote {
-        println!("Remote URL: {}", remote.url);
-        println!("Branch: {}", remote.branch);
+    // Check if remote is configured
+    if let Some(ref mut remote) = vault.manifest.remote {
+        remote.branch = branch.clone();
+        vault.save_manifest()?;
+
+        // Also update git branch
+        let git_repo = crate::git_ops::GitRepo::open(&vault.repo_path)?;
+        git_repo.set_branch(&branch)?;
+
+        println!("{} Updated branch for vault '{}'", "✓".green().bold(), vault_name);
+        println!("  Branch: {}", branch);
     } else {
-        println!("No remote configured for vault '{}'", vault_name);
+        bail!("No remote configured for vault '{}'\n\nSet remote first with:\n  gfv vault remote set <url>", vault_name);
     }
 
     Ok(())
 }
 
-pub fn remote_remove(name: Option<String>) -> Result<()> {
+pub fn remove_remote(name: Option<String>) -> Result<()> {
     let config = load_config()?;
     let vault_name = name.unwrap_or_else(|| config.current.active.clone());
 

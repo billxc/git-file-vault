@@ -185,33 +185,34 @@ enum VaultCommands {
         name: Option<String>,
     },
 
-    /// Manage remote
-    Remote {
-        #[command(subcommand)]
-        command: RemoteCommands,
-    },
-}
-
-#[derive(Subcommand)]
-enum RemoteCommands {
     /// Set remote URL
-    Set {
+    SetRemote {
         /// Remote URL
         url: String,
 
+        /// Branch name (optional, defaults to current branch or 'main')
+        #[arg(short, long)]
+        branch: Option<String>,
+
         /// Vault name (default: active vault)
+        #[arg(short, long)]
         name: Option<String>,
     },
 
-    /// Get remote URL
-    Get {
+    /// Set remote branch
+    SetBranch {
+        /// Branch name
+        branch: String,
+
         /// Vault name (default: active vault)
+        #[arg(short, long)]
         name: Option<String>,
     },
 
     /// Remove remote
-    Remove {
+    RemoveRemote {
         /// Vault name (default: active vault)
+        #[arg(short, long)]
         name: Option<String>,
     },
 }
@@ -249,34 +250,30 @@ impl Cli {
             }
             Commands::Vault { command } => {
                 match command {
-                    VaultCommands::List => commands::vault_list(),
+                    VaultCommands::List => commands::vault::list(),
                     VaultCommands::Create { name, path, remote, branch } => {
-                        commands::vault_create(name, path, remote, branch)
+                        commands::vault::create(name, path, remote, branch)
                     }
-                    VaultCommands::Switch { name } => commands::vault_switch(name),
+                    VaultCommands::Switch { name } => commands::vault::switch(name),
                     VaultCommands::Remove { name, delete_files } => {
-                        commands::vault_remove(name, delete_files)
+                        commands::vault::remove(name, delete_files)
                     }
-                    VaultCommands::Info { name } => commands::vault_info(name),
-                    VaultCommands::Remote { command } => {
-                        match command {
-                            RemoteCommands::Set { url, name } => {
-                                commands::vault_remote_set(url, name)
-                            }
-                            RemoteCommands::Get { name } => {
-                                commands::vault_remote_get(name)
-                            }
-                            RemoteCommands::Remove { name } => {
-                                commands::vault_remote_remove(name)
-                            }
-                        }
+                    VaultCommands::Info { name } => commands::vault::info(name),
+                    VaultCommands::SetRemote { url, branch, name } => {
+                        commands::vault::set_remote(url, branch, name)
+                    }
+                    VaultCommands::SetBranch { branch, name } => {
+                        commands::vault::set_branch(branch, name)
+                    }
+                    VaultCommands::RemoveRemote { name } => {
+                        commands::vault::remove_remote(name)
                     }
                 }
             }
             Commands::Debug { command } => {
                 match command {
-                    DebugCommands::Paths => commands::debug_show_paths(),
-                    DebugCommands::Clean { force } => commands::debug_clean(force),
+                    DebugCommands::Paths => commands::debug::show_paths(),
+                    DebugCommands::Clean { force } => commands::debug::clean(force),
                 }
             }
         }

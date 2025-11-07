@@ -16,8 +16,9 @@ gfv vault <subcommand> [options]
 | `create <name> [path]` | Create new vault |
 | `remove <name>` | Remove vault |
 | `switch <name>` | Switch to vault (becomes active and default) |
-| `remote set <url> [name]` | Set remote URL |
-| `remote get [name]` | Show remote URL |
+| `set-remote <url> [--branch <branch>]` | Set remote URL and branch |
+| `set-branch <branch>` | Set remote branch |
+| `remove-remote` | Remove remote |
 | `info [name]` | Show vault info |
 
 ## Vault Create
@@ -83,19 +84,28 @@ gfv vault remove old-vault --delete-files  # Also delete directory
 **Note:** Cannot remove the currently active vault. Switch to another vault first.
 
 ### Manage remote
+
 ```bash
 # Set remote for active vault
-gfv vault remote set git@github.com:user/configs.git
+gfv vault set-remote https://github.com/user/configs.git
+
+# Set remote with specific branch
+gfv vault set-remote https://github.com/user/configs.git --branch develop
 
 # Set remote for specific vault
-gfv vault remote set git@github.com:company/configs.git work
+gfv vault set-remote https://github.com/company/configs.git --name work
 
-# Show remote
-gfv vault remote get
-gfv vault remote get work
+# Change branch only
+gfv vault set-branch main
+
+# Change branch for specific vault
+gfv vault set-branch develop --name work
 
 # Remove remote
-gfv vault remote remove
+gfv vault remove-remote
+
+# Show remote info (use info command)
+gfv vault info
 ```
 
 ### Show info
