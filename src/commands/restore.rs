@@ -28,11 +28,6 @@ pub fn restore(
     let vault = Vault::load(&vault_dir)
         .context("Failed to load vault")?;
 
-    if vault.manifest.files.is_empty() {
-        println!("No files to restore. Vault is empty.");
-        return Ok(());
-    }
-
     println!("{} Restoring from vault...", "==>".green().bold());
 
     // Step 1: Pull from remote if configured
@@ -56,6 +51,17 @@ pub fn restore(
                 return Err(e);
             }
         }
+    }
+
+    // If no files to restore, exit early after pulling
+    if vault.manifest.files.is_empty() {
+        println!("\n{} No linked files to restore.", "✓".green().bold());
+        if vault.manifest.remote.is_some() {
+            println!("Git repository has been updated.");
+        } else {
+            println!("Vault is empty.");
+        }
+        return Ok(());
     }
 
     // Step 2: Check for uncommitted source changes (simplified for MVP)
