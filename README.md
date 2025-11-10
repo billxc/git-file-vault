@@ -154,6 +154,33 @@ gfv link ~/.bashrc --platform linux
 
 Files with platform tags will only sync on matching platforms.
 
+### Command Aliases
+
+Create custom shortcuts for frequently used commands:
+
+```bash
+# Create an alias
+gfv alias add use vault switch
+
+# Use the alias
+gfv use work      # Same as: gfv vault switch work
+
+# List aliases
+gfv alias list
+
+# Remove alias
+gfv alias remove use
+```
+
+Common aliases:
+```bash
+gfv alias add sw vault switch    # Quick vault switching
+gfv alias add ls list --long     # Detailed file listing
+gfv alias add save backup         # Shorter backup command
+```
+
+See [alias.md](./docs/commands/alias.md) for more details.
+
 ### Conflict Resolution
 
 When both vault and source files are modified, gfv will prompt you:
@@ -249,6 +276,8 @@ gfv link ~/.zshrc        # This will push immediately
   - [backup](./docs/commands/backup.md) - Backup to remote
   - [restore](./docs/commands/restore.md) - Restore from remote
   - [config](./docs/commands/config.md) - Manage configuration
+  - [alias](./docs/commands/alias.md) - Manage command aliases
+  - [vault](./docs/commands/vault.md) - Manage vaults
 
 ## Roadmap
 

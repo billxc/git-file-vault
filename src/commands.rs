@@ -9,6 +9,7 @@ pub mod restore;
 pub mod status;
 pub mod unlink;
 pub mod config;
+pub mod alias;
 pub mod vault;
 pub mod debug;
 
@@ -22,5 +23,5 @@ pub use status::status;
 pub use unlink::unlink;
 pub use config::config;
 
-// Vault and debug subcommands use full module paths for clarity
-// (e.g., commands::vault::create, commands::debug::show_paths)
+// Alias, vault and debug subcommands use full module paths for clarity
+// (e.g., commands::alias::add, commands::vault::create, commands::debug::show_paths)

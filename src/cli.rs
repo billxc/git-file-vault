@@ -142,6 +142,12 @@ enum Commands {
         unset: Option<String>,
     },
 
+    /// Manage command aliases
+    Alias {
+        #[command(subcommand)]
+        command: AliasCommands,
+    },
+
     /// Manage vaults
     Vault {
         #[command(subcommand)]
@@ -153,6 +159,27 @@ enum Commands {
         #[command(subcommand)]
         command: DebugCommands,
     },
+}
+
+#[derive(Subcommand)]
+enum AliasCommands {
+    /// Add a new alias
+    Add {
+        /// Alias name
+        name: String,
+
+        /// Command to alias (e.g., "vault switch")
+        command: Vec<String>,
+    },
+
+    /// Remove an alias
+    Remove {
+        /// Alias name
+        name: String,
+    },
+
+    /// List all aliases
+    List,
 }
 
 #[derive(Subcommand)]
@@ -274,6 +301,19 @@ impl Cli {
             }
             Commands::Config { key, value, list, unset } => {
                 commands::config(key, value, list, unset)
+            }
+            Commands::Alias { command } => {
+                match command {
+                    AliasCommands::Add { name, command } => {
+                        commands::alias::add(name, command)
+                    }
+                    AliasCommands::Remove { name } => {
+                        commands::alias::remove(name)
+                    }
+                    AliasCommands::List => {
+                        commands::alias::list()
+                    }
+                }
             }
             Commands::Vault { command } => {
                 match command {

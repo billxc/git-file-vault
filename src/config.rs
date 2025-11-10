@@ -13,6 +13,8 @@ pub struct Config {
     pub ai: AiConfig,
     #[serde(default)]
     pub sync: SyncConfig,
+    #[serde(default)]
+    pub aliases: HashMap<String, String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -73,6 +75,7 @@ impl Config {
                 },
                 ai: Default::default(),
                 sync: Default::default(),
+                aliases: HashMap::new(),
             });
         }
 
