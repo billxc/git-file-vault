@@ -27,23 +27,33 @@ Get or set configuration values in `~/.config/gfv/config.toml`.
 
 ## Examples
 
-### Set AI API key
+### Configure AI for commit messages
 ```bash
-gfv config ai.api_key sk-xxxxx
-```
+# Set endpoint (required)
+gfv config ai.endpoint https://api.openai.com/v1/chat/completions
 
-### Set AI model
-```bash
-gfv config ai.model gpt-4
+# Set API key (required)
+gfv config ai.api_key sk-xxxxx
+
+# Set model (required)
+gfv config ai.model gpt-4o-mini
 ```
 
 ### Get value
+```bash
+gfv config ai.endpoint
+```
+Output:
+```
+https://api.openai.com/v1/chat/completions
+```
+
 ```bash
 gfv config ai.api_key
 ```
 Output:
 ```
-sk-xxxxx
+****** (set)
 ```
 
 ### List all settings
@@ -52,14 +62,26 @@ gfv config --list
 ```
 Output:
 ```
-ai.provider=openai
-ai.api_key=sk-xxxxx
-ai.model=gpt-3.5-turbo
-sync.conflict_strategy=prompt
+Vault Configuration:
+
+General:
+  vault.dir = /Users/username/.gfv/default
+  vault.repo = /Users/username/.gfv/default/repo
+
+Remote:
+  remote.url = git@github.com:username/configs.git
+  remote.branch = main
+
+AI:
+  ai.endpoint = https://api.openai.com/v1/chat/completions
+  ai.api_key = ****** (set)
+  ai.model = gpt-4o-mini
 ```
 
 ### Unset a value
 ```bash
+gfv config --unset ai.endpoint
+gfv config --unset ai.api_key
 gfv config --unset ai.model
 ```
 
@@ -69,9 +91,11 @@ gfv config --unset ai.model
 
 | Key | Description | Default |
 |-----|-------------|---------|
-| `ai.provider` | AI provider (openai) | `openai` |
-| `ai.api_key` | OpenAI API key | (none) |
-| `ai.model` | Model name | `gpt-3.5-turbo` |
+| `ai.endpoint` | OpenAI-compatible API endpoint URL | (none) |
+| `ai.api_key` | API key for authentication | (none) |
+| `ai.model` | Model name (e.g., gpt-4o-mini, gpt-4, etc.) | (none) |
+
+**Note:** All three AI settings must be configured for AI-generated commit messages to work.
 
 ### Sync Settings
 
@@ -91,27 +115,32 @@ Location: `~/.config/gfv/config.toml`
 Example:
 ```toml
 [vaults]
-default = "/Users/username/.gfv"
-work = "/Users/username/.work-vault"
+default = "/Users/username/.gfv/default"
+work = "/Users/username/.gfv/work"
 
 [current]
 active = "default"
 
 [ai]
-provider = "openai"
+endpoint = "https://api.openai.com/v1/chat/completions"
 api_key = "sk-xxxxx"
-model = "gpt-3.5-turbo"
+model = "gpt-4o-mini"
 
 [sync]
 conflict_strategy = "prompt"
+default_branch = "main"
+
+[aliases]
+save = "backup"
 ```
 
 ## Notes
 
-- API keys stored with restricted permissions (0600)
-- Environment variable `OPENAI_API_KEY` takes precedence over config file
-- You can also manually edit `~/.config/gfv/config.toml`
-- Vault-specific settings are in `<vault>/.vault-manifest.json`
+- Configuration file is stored at `~/.gfv/config.toml`
+- You can also manually edit the config file directly
+- AI settings are global and apply to all vaults
+- Vault-specific settings (like remote URL) are in `<vault>/.vault-manifest.json`
+- API keys are stored in plain text - ensure proper file permissions
 
 ## See Also
 

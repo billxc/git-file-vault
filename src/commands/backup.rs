@@ -6,9 +6,12 @@ use std::fs;
 
 use crate::vault::Vault;
 use crate::git_ops::GitRepo;
+use crate::config::Config;
+#[cfg(feature = "ai")]
+use crate::ai::AiClient;
 use super::helpers::{get_vault_dir, get_active_vault_name};
 
-pub fn backup(
+pub async fn backup(
     message: Option<String>,
     _force: bool,
     _set_upstream: bool,
@@ -81,9 +84,8 @@ pub fn backup(
         let commit_msg = if let Some(msg) = message {
             msg
         } else {
-            // TODO: Try AI generation if configured
-            // For now, auto-generate based on changed files
-            "Update vault".to_string()
+            // Try AI generation if configured
+            generate_commit_message_auto(&git_repo).await?
         };
 
         git_repo.add_all()
@@ -92,7 +94,7 @@ pub fn backup(
         git_repo.commit(&commit_msg)
             .context("Failed to commit changes")?;
 
-        println!("  {} Committed locally", "✓".green());
+        println!("  {} Committed locally: \"{}\"", "✓".green(), commit_msg);
     }
 
     // Step 4: Sync with remote (if configured)
@@ -146,6 +148,58 @@ pub fn backup(
     }
 
     Ok(())
+}
+
+/// Generate commit message automatically (using AI if configured, or fallback)
+async fn generate_commit_message_auto(git_repo: &GitRepo) -> Result<String> {
+    // Load global config
+    let config = Config::load().unwrap_or_else(|_| Config {
+        vaults: std::collections::HashMap::new(),
+        current: crate::config::CurrentConfig {
+            active: "default".to_string(),
+        },
+        ai: Default::default(),
+        sync: Default::default(),
+        aliases: std::collections::HashMap::new(),
+    });
+
+    // Check if AI is configured
+    #[cfg(feature = "ai")]
+    {
+        if let (Some(endpoint), Some(api_key), Some(model)) = (
+            &config.ai.endpoint,
+            &config.ai.api_key,
+            &config.ai.model,
+        ) {
+            println!("  {} Generating commit message with AI...", "→".blue());
+
+            // Get the diff
+            let diff = git_repo.get_diff()
+                .context("Failed to get git diff")?;
+
+            if !diff.trim().is_empty() {
+                // Try to generate with AI
+                let ai_client = AiClient::new(
+                    endpoint.clone(),
+                    api_key.clone(),
+                    model.clone(),
+                );
+
+                match ai_client.generate_commit_message(&diff).await {
+                    Ok(message) => {
+                        return Ok(message);
+                    }
+                    Err(e) => {
+                        eprintln!("  {} AI generation failed: {}", "⚠".yellow(), e);
+                        eprintln!("  {} Falling back to default message", "→".yellow());
+                    }
+                }
+            }
+        }
+    }
+
+    // Fallback to default message
+    Ok("Update vault".to_string())
 }
 
 /// Recursively copy directory

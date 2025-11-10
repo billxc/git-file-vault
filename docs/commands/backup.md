@@ -126,22 +126,29 @@ Your changes are committed locally but not pushed.
 Resolve conflicts manually in: /Users/username/.gfv/default/repo
 ```
 
-## AI Configuration
+## AI-Generated Commit Messages
 
-Configure AI for commit messages:
-```bash
-gfv config ai.api_key sk-xxxxx
-gfv config ai.model gpt-3.5-turbo  # optional
-```
+If AI is configured (all three settings: `ai.endpoint`, `ai.api_key`, `ai.model`), backup will automatically generate commit messages when no `-m` flag is provided.
 
-Or use environment variable:
-```bash
-export OPENAI_API_KEY=sk-xxxxx
-```
+**Behavior:**
 
-**Priority**: Environment variable > Config file > Auto-generate
+- **With AI configured + no `-m`**: Generates message from diff automatically
+  ```
+  → Generating commit message with AI...
+  ✓ Committed locally: "update zsh configuration and git aliases"
+  ```
 
-**Fallback**: If AI fails, automatically falls back to simple auto-generated messages.
+- **Without AI or if AI fails**: Uses default message
+  ```
+  ✓ Committed locally: "Update vault"
+  ```
+
+- **With `-m` flag**: Uses your custom message
+  ```
+  ✓ Committed locally: "Your custom message"
+  ```
+
+**Configuration:** See [config.md](./config.md) for how to set up AI.
 
 ## Exit Codes
 

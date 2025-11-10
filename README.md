@@ -197,29 +197,36 @@ Choose:
   [C] Cancel
 ```
 
-### AI-Generated Messages
+### AI-Generated Commit Messages
 
-**Automatic and seamless** - Just configure once, and `push` will use AI automatically.
+**Automatic and seamless** - Just configure once, and `backup` will use AI automatically.
 
-Configure OpenAI API key:
+Configure AI endpoint (OpenAI-compatible API):
 
 ```bash
+gfv config ai.endpoint https://api.openai.com/v1/chat/completions
 gfv config ai.api_key sk-xxxxx
+gfv config ai.model gpt-4o-mini
 ```
 
-Then every time you push:
+Then every time you backup without a message:
 
 ```bash
 gfv backup
-# → Analyzing changes...
-# → Suggested: "feat: add git aliases and improve zsh prompt"
-# → [A]ccept / [E]dit / [R]egenerate / [C]ancel?
+# → Generating commit message with AI...
+# ✓ Committed locally: "update zsh configuration and git aliases"
 ```
 
 **Smart fallback:**
-- AI configured → Uses AI to generate message
-- AI fails or not configured → Simple auto-generated message
+- AI configured → Uses AI to generate message automatically
+- AI fails or not configured → Falls back to "Update vault"
 - Always can override with `-m "message"`
+
+**Supports any OpenAI-compatible endpoint:**
+- OpenAI (GPT-3.5, GPT-4, GPT-4o, etc.)
+- Azure OpenAI
+- Local models (Ollama, LM Studio, etc.)
+- Any API following the OpenAI chat completions format
 
 ## How It Works
 

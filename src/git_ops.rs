@@ -128,6 +128,54 @@ impl GitRepo {
         Ok(!statuses.is_empty())
     }
 
+    /// Get the diff of all changes (staged and unstaged)
+    pub fn get_diff(&self) -> Result<String> {
+        let mut diff_output = String::new();
+
+        // Get diff for unstaged changes
+        let diff = self.repo.diff_index_to_workdir(None, None)?;
+        diff_output.push_str(&Self::format_diff(&diff)?);
+
+        // Get diff for staged changes
+        let head = self.repo.head()?;
+        let tree = head.peel_to_tree()?;
+        let diff_staged = self.repo.diff_tree_to_index(Some(&tree), None, None)?;
+        diff_output.push_str(&Self::format_diff(&diff_staged)?);
+
+        Ok(diff_output)
+    }
+
+    /// Format a diff object as a string
+    fn format_diff(diff: &git2::Diff) -> Result<String> {
+        let mut output = String::new();
+
+        diff.print(git2::DiffFormat::Patch, |_delta, _hunk, line| {
+            let origin = line.origin();
+            let content = std::str::from_utf8(line.content()).unwrap_or("");
+
+            match origin {
+                '+' | '-' | ' ' => {
+                    output.push(origin);
+                    output.push_str(content);
+                }
+                'F' => {
+                    output.push_str("diff --git ");
+                    output.push_str(content);
+                }
+                'H' => {
+                    output.push_str("@@ ");
+                    output.push_str(content);
+                }
+                _ => {
+                    output.push_str(content);
+                }
+            }
+            true
+        })?;
+
+        Ok(output)
+    }
+
     /// Check if a remote branch exists
     pub fn remote_branch_exists(&self, remote_name: &str, branch: &str) -> bool {
         let refname = format!("refs/remotes/{}/{}", remote_name, branch);

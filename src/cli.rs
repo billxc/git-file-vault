@@ -294,7 +294,19 @@ impl Cli {
                 commands::status(vault)
             }
             Commands::Backup { message, force, set_upstream, vault } => {
-                commands::backup(message, force, set_upstream, vault)
+                // Need to use tokio runtime for async backup
+                #[cfg(feature = "ai")]
+                {
+                    tokio::runtime::Runtime::new()?.block_on(async {
+                        commands::backup(message, force, set_upstream, vault).await
+                    })
+                }
+                #[cfg(not(feature = "ai"))]
+                {
+                    tokio::runtime::Runtime::new()?.block_on(async {
+                        commands::backup(message, force, set_upstream, vault).await
+                    })
+                }
             }
             Commands::Restore { rebase, dry_run, force, vault } => {
                 commands::restore(rebase, dry_run, force, vault)

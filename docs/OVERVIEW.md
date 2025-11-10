@@ -182,9 +182,9 @@ work = "/Users/username/.work-vault"
 active = "default"
 
 [ai]
-provider = "openai"
+endpoint = "https://api.openai.com/v1/chat/completions"
 api_key = "sk-xxxxx"
-model = "gpt-3.5-turbo"
+model = "gpt-4o-mini"
 
 [sync]
 conflict_strategy = "prompt"  # prompt | use_vault | use_source
@@ -285,22 +285,25 @@ gfv link ~/.zshrc --platform macos
 
 ### AI Commit Message Generation
 
-**Smart auto-detection** - No manual flag needed.
+**Fully automatic** - No flags or prompts needed.
 
 **Configuration:**
 ```bash
+gfv config ai.endpoint https://api.openai.com/v1/chat/completions
 gfv config ai.api_key sk-xxxxx
+gfv config ai.model gpt-4o-mini
 ```
 
 **Priority:**
 1. User-specified message (`-m "message"`)
-2. AI-generated (if configured)
-3. Auto-generated (simple fallback)
+2. AI-generated (if all 3 AI settings configured)
+3. Auto-generated fallback ("Update vault")
 
 **Behavior:**
-- If AI configured: Try AI generation → Show preview → Let user accept/edit
-- If AI fails: Fallback to simple message
-- Always works, even without configuration
+- If AI configured: Automatically generates commit message from diff
+- If AI fails: Falls back to "Update vault" with warning
+- Always works, even without AI configuration
+- Supports any OpenAI-compatible API endpoint
 
 ---
 

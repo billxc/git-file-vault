@@ -27,6 +27,7 @@ pub struct AiConfig {
     pub provider: Option<String>,
     pub api_key: Option<String>,
     pub model: Option<String>,
+    pub endpoint: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -52,6 +53,20 @@ fn default_conflict_strategy() -> String {
 
 fn default_branch() -> String {
     "main".to_string()
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            vaults: HashMap::new(),
+            current: CurrentConfig {
+                active: "default".to_string(),
+            },
+            ai: Default::default(),
+            sync: Default::default(),
+            aliases: HashMap::new(),
+        }
+    }
 }
 
 impl Config {
