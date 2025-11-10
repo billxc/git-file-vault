@@ -259,7 +259,7 @@ impl GitRepo {
     }
 
     /// Pull changes from remote
-    pub fn pull(&self, remote_name: &str, branch: &str) -> Result<()> {
+    pub fn pull(&self, remote_name: &str, branch: &str, use_rebase: bool) -> Result<()> {
         let mut remote = self.repo.find_remote(remote_name)
             .context("Failed to find remote")?;
 
@@ -295,6 +295,33 @@ impl GitRepo {
             reference.set_target(fetch_commit.id(), "Fast-forward")?;
             self.repo.set_head(&refname)?;
             self.repo.checkout_head(Some(git2::build::CheckoutBuilder::default().force()))?;
+        } else if use_rebase {
+            // Use rebase strategy to avoid merge conflicts
+            // Perform rebase
+            let mut rebase = self.repo.rebase(
+                None,  // None means rebase current HEAD
+                Some(&fetch_commit),
+                None,
+                None
+            ).context("Failed to start rebase")?;
+
+            // Process each rebase operation
+            while let Some(op) = rebase.next() {
+                op.context("Rebase operation failed")?;
+                let index = self.repo.index()?;
+                if index.has_conflicts() {
+                    rebase.abort()?;
+                    return Err(VaultError::GitConflict.into());
+                }
+                let signature = Signature::now("gfv", "gfv@local")
+                    .context("Failed to create signature")?;
+                rebase.commit(None, &signature, None)
+                    .context("Failed to commit during rebase")?;
+            }
+
+            // Finish rebase
+            rebase.finish(None)
+                .context("Failed to finish rebase")?;
         } else {
             // Need to merge - for now, just report conflict
             return Err(VaultError::GitConflict.into());

@@ -108,7 +108,7 @@ pub fn backup(
 
         // Only pull if remote branch exists (skip on first push)
         if git_repo.remote_branch_exists("origin", &current_branch) {
-            match git_repo.pull("origin", &current_branch) {
+            match git_repo.pull("origin", &current_branch, true) {
                 Ok(_) => {
                     println!("    {} Pulled from origin/{}", "✓".green(), current_branch);
                 }
@@ -127,7 +127,7 @@ pub fn backup(
         match git_repo.push("origin", &current_branch) {
             Ok(_) => {
                 println!("    {} Pushed to origin/{}", "✓".green(), current_branch);
-                println!("\n{} Your configs are backed up to remote!", "✓".green().bold());
+                println!("\n{} Your files are backed up to remote!", "✓".green().bold());
             }
             Err(e) => {
                 eprintln!("{} Failed to push to remote: {}", "✗".red().bold(), e);
@@ -138,7 +138,7 @@ pub fn backup(
     } else {
         // No remote configured
         if has_changes {
-            println!("\n{} Your configs are backed up locally!", "✓".green().bold());
+            println!("\n{} Your files are backed up locally!", "✓".green().bold());
             println!("(No remote configured - local-only mode)");
         } else {
             println!("\n{} Everything up to date", "✓".green().bold());

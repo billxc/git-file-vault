@@ -46,7 +46,7 @@ pub fn restore(
         let current_branch = git_repo.current_branch()
             .unwrap_or_else(|_| remote_config.branch.clone());
 
-        match git_repo.pull("origin", &current_branch) {
+        match git_repo.pull("origin", &current_branch, true) {
             Ok(_) => {
                 println!("    {} Pulled from origin/{}", "✓".green(), current_branch);
             }
@@ -186,7 +186,7 @@ pub fn restore(
             files_restored,
             files_skipped
         );
-        println!("Your configs are up to date!");
+        println!("Your files are up to date!");
     }
 
     Ok(())
