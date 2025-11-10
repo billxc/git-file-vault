@@ -2,9 +2,12 @@ use clap::{Parser, Subcommand};
 use anyhow::Result;
 use crate::commands;
 
+// Use version set by build.rs
+const VERSION: &str = env!("GFV_VERSION");
+
 #[derive(Parser)]
 #[command(name = "gfv")]
-#[command(version, about = "Git-based file version management tool", long_about = None)]
+#[command(version = VERSION, about = "Git-based file version management tool", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]
     command: Commands,

@@ -78,10 +78,28 @@ jobs:
         if: matrix.platform == 'linux-arm64'
         run: sudo apt-get install -y gcc-aarch64-linux-gnu
 
+      - name: Set version for dev build
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            # Release build: extract version from tag
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            echo "DEV_BUILD=false" >> $GITHUB_ENV
+          else
+            # Dev build: use timestamp
+            TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+            VERSION="dev-$TIMESTAMP"
+            echo "DEV_BUILD=true" >> $GITHUB_ENV
+          fi
+          echo "BUILD_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Building version: $VERSION"
+
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+          DEV_BUILD: ${{ env.DEV_BUILD }}
+          BUILD_VERSION: ${{ env.BUILD_VERSION }}
 
       - name: Prepare artifact
         shell: bash
@@ -101,7 +119,7 @@ jobs:
           path: target/${{ matrix.target }}/release/${{ matrix.asset_name }}
 
   release:
-    name: Create Development Release
+    name: Create Release
     needs: build
     runs-on: ubuntu-latest
 
@@ -117,60 +135,60 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
-      - name: Generate timestamp tag
-        id: timestamp
+      - name: Determine release type and version
+        id: release_info
         run: |
-          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
-          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
-          echo "tag=dev-$TIMESTAMP" >> $GITHUB_OUTPUT
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            # Official release from tag
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            TAG_NAME="v$VERSION"
+            RELEASE_NAME="Release v$VERSION"
+            IS_PRERELEASE="false"
+            echo "type=release" >> $GITHUB_OUTPUT
+          else
+            # Development build
+            TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+            VERSION="dev-$TIMESTAMP"
+            TAG_NAME="dev-$TIMESTAMP"
+            RELEASE_NAME="Development Build $TIMESTAMP"
+            IS_PRERELEASE="true"
+            echo "type=dev" >> $GITHUB_OUTPUT
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
 
-      - name: Create timestamped release
+      - name: Generate release body
+        run: |
+          # Use the same template for both release and dev builds
+          sed -e 's|{{VERSION}}|${{ steps.release_info.outputs.version }}|g' \
+              -e 's|{{TAG_NAME}}|${{ steps.release_info.outputs.tag_name }}|g' \
+              -e 's|{{REPOSITORY}}|${{ github.repository }}|g' \
+              .github/release-template.md > release_body.md
+          
+          # Add header based on build type
+          if [[ "${{ steps.release_info.outputs.type }}" == "release" ]]; then
+            echo "## Release ${{ steps.release_info.outputs.version }}" | cat - release_body.md > temp && mv temp release_body.md
+          else
+            cat << 'EOF' | cat - release_body.md > temp && mv temp release_body.md
+          ## Development Build
+          
+          **Build**: ${{ steps.release_info.outputs.version }}
+          **Commit**: ${{ github.sha }}
+          **Branch**: ${{ github.ref_name }}
+          
+          ---
+          
+          EOF
+          fi
+
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.timestamp.outputs.tag }}
-          name: Development Build ${{ steps.timestamp.outputs.timestamp }}
-          body: |
-            ## Development Build
-
-            **Build**: ${{ steps.timestamp.outputs.timestamp }}
-            **Commit**: ${{ github.sha }}
-            **Branch**: ${{ github.ref_name }}
-            **Build date**: ${{ github.event.head_commit.timestamp }}
-
-            ### Downloads
-            - **macOS Apple Silicon (ARM64)**: `gfv-macos-arm64`
-            - **macOS Intel (x86_64)**: `gfv-macos-x86_64`
-            - **Linux x86_64**: `gfv-linux-x86_64`
-            - **Linux ARM64**: `gfv-linux-arm64`
-            - **Windows x86_64**: `gfv-windows-x86_64.exe`
-            - **Windows ARM64**: `gfv-windows-arm64.exe`
-
-            ### Installation
-
-            **macOS**:
-            ```bash
-            # Download (replace TAG with this release tag)
-            curl -L -O https://github.com/${{ github.repository }}/releases/download/${{ steps.timestamp.outputs.tag }}/gfv-macos-arm64
-
-            # Make it executable
-            chmod +x gfv-macos-arm64
-
-            # Move to PATH (optional)
-            sudo mv gfv-macos-arm64 /usr/local/bin/gfv
-            ```
-
-            **Linux**:
-            ```bash
-            curl -L -O https://github.com/${{ github.repository }}/releases/download/${{ steps.timestamp.outputs.tag }}/gfv-linux-x86_64
-            chmod +x gfv-linux-x86_64
-            sudo mv gfv-linux-x86_64 /usr/local/bin/gfv
-            ```
-
-            **Windows**:
-            Download `gfv-windows-x86_64.exe` and rename to `gfv.exe`, then add to your PATH.
-
-            ---
-            *Note: This is an automated development build. For stable releases, see tagged versions.*
+          tag_name: ${{ steps.release_info.outputs.tag_name }}
+          name: ${{ steps.release_info.outputs.release_name }}
+          body_path: release_body.md
           files: |
             artifacts/gfv-macos-arm64/gfv-macos-arm64
             artifacts/gfv-macos-x86_64/gfv-macos-x86_64
@@ -179,4 +197,4 @@ jobs:
             artifacts/gfv-windows-x86_64.exe/gfv-windows-x86_64.exe
             artifacts/gfv-windows-arm64.exe/gfv-windows-arm64.exe
           draft: false
-          prerelease: true
+          prerelease: ${{ steps.release_info.outputs.is_prerelease }}
