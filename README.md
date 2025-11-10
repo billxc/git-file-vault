@@ -105,30 +105,42 @@ That's it! Your config files are now synced across devices.
 # Initialize a new vault
 gfv init
 
-# Add files to vault
+# Initialize with remote repository
+gfv init --remote git@github.com:username/my-configs.git
+
+# Link files to vault (creates management relationship)
 gfv link ~/.zshrc
-gfv link ~/.config/alacritty --name alacritty
+gfv link ~/.config/nvim --name nvim
+
+# Link platform-specific files
+gfv link ~/.ssh/config --platform macos
 
 # List managed files
 gfv list
 
-# Check status
+# List with detailed information
+gfv list --long
+
+# Check status of managed files
 gfv status
 
-# Sync changes (bidirectional)
-gfv sync
-
-# Push to remote (auto-syncs, commits with AI if configured, and pushes)
+# Backup changes to vault (copies files, commits, and pushes to remote if configured)
 gfv backup
 
-# Specify commit message manually
+# Backup with custom commit message
 gfv backup -m "Update zsh config"
 
-# Pull from remote (pulls and syncs)
+# Restore from vault (pulls from remote if configured, then copies vault → source)
 gfv restore
 
-# Remove file from vault
+# Restore with force (overwrites local changes without prompt)
+gfv restore --force
+
+# Unlink file from vault (stops managing, keeps source file)
 gfv unlink zsh/zshrc
+
+# Unlink and delete from vault
+gfv unlink old-config --delete-files
 ```
 
 ### Platform-Specific Files

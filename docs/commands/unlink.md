@@ -20,9 +20,7 @@ Unlinks a file from vault management. The file is removed from the manifest, opt
 
 ## Options
 
-- `--keep-source` - Keep source file (default)
-- `--delete-source` - Also delete the actual source file
-- `--force` - No confirmation prompt
+- `--delete-files` - Also delete from vault
 - `--vault <name>` - Specify which vault to use (default: active vault)
 
 ## Examples
@@ -31,23 +29,18 @@ Unlinks a file from vault management. The file is removed from the manifest, opt
 ```bash
 gfv unlink zsh/zshrc
 ```
-Stops managing the file but keeps `~/.zshrc` intact.
+Removes file from manifest and vault. Keeps `~/.zshrc` intact.
 
-### Remove and delete source
+### Remove and delete from vault
 ```bash
-gfv unlink vscode/settings.json --delete-source
+gfv unlink vscode/settings.json --delete-files
 ```
-⚠️ Also deletes the actual source file.
+Removes from manifest and deletes the vault copy.
 
 ### Unlink from a specific vault
 ```bash
 gfv unlink zsh/zshrc --vault work
-gfv unlink old-config --vault personal --force
-```
-
-### Force removal (no prompt)
-```bash
-gfv unlink old-config --force
+gfv unlink old-config --vault personal
 ```
 
 ## Behavior
@@ -55,101 +48,67 @@ gfv unlink old-config --force
 1. **Check if file exists** in manifest
    - Error if not found
 
-2. **Confirm with user** (unless `--force`)
-   - Show vault path and source path
-   - Ask if also delete source file (if `--delete-source`)
-
-3. **Remove from manifest**
+2. **Remove from manifest**
    - Delete entry from `.vault-manifest.json`
 
-4. **Remove from vault**
-   - Delete file/directory from vault
-   - Internally: `git rm`
+3. **Optionally delete from vault**
+   - If `--delete-files`: Delete file/directory from vault
 
-5. **Optionally delete source**
-   - If `--delete-source`: Delete actual file
+4. **Commit changes** (internal)
+   - `git commit` with message: `"Unlink <vault-path>"`
 
-6. **Commit changes** (internal)
-   - `git commit` with message: `"Remove <vault-path>"`
+**Note:** Source file is never deleted. Only vault copy and manifest entry are affected.
 
 ## Output
 
-### Standard removal
+### Standard removal (without --delete-files)
 ```
-Removing: zsh/zshrc
-  Source: /Users/username/.zshrc
+==> Unlinking zsh/zshrc from vault...
+  ✓ Removed from manifest
+  → Kept files in vault (use --delete-files to remove)
+  ✓ Committed changes
 
-This will stop managing this file.
-The source file will NOT be deleted.
-
-Continue? [Y/n] y
-
-✓ Removed from vault
-✓ Updated manifest
-✓ Committed changes
-
-File is no longer managed by gfv.
-Your source file at /Users/username/.zshrc is still there.
+File is no longer managed by gfv
+Source file location unchanged: /Users/username/.zshrc
 ```
 
-### With source deletion
+### With --delete-files
 ```
-Removing: old-config
-  Source: /Users/username/.old-config
+==> Unlinking old-config from vault...
+  ✓ Removed from manifest
+  ✓ Deleted from vault
+  ✓ Committed changes
 
-⚠️  WARNING: --delete-source specified
-This will PERMANENTLY DELETE:
-  - File in vault
-  - Source file: /Users/username/.old-config
-
-Are you absolutely sure? [y/N] y
-
-✓ Removed from vault
-✓ Deleted source file
-✓ Updated manifest
-✓ Committed changes
-
-File removed from vault and source deleted.
+File is no longer managed by gfv
+Source file location unchanged: /Users/username/.old-config
 ```
 
 ### File not found
 ```
-Error: File not managed
-'unknown-file' is not in the vault.
+Error: File 'unknown-file' is not managed by gfv.
 
-List managed files with:
-  gfv list
-```
-
-### With --force
-```
-Removing: zsh/zshrc (forced)
-✓ Removed from vault
-✓ Updated manifest
-✓ Committed changes
+List managed files with: gfv list
 ```
 
 ## Exit Codes
 
 - `0` - Success
 - `1` - File not found in manifest
-- `2` - User cancelled
-- `3` - Source file deletion failed
 - `4` - Vault not initialized
 
 ## Notes
 
-- **Source file is safe by default** - Only vault copy is removed
-- Use `--delete-source` with caution - it's permanent
+- **Source file is always safe** - Never deleted, only vault copy is affected
+- Use `--delete-files` to also remove from vault (optional)
 - Changes are committed automatically
-- You can re-add the file later if needed
+- You can re-link the file later if needed
 
 ## Comparison with Other Operations
 
 | Command | Effect on Vault | Effect on Source |
 |---------|-----------------|------------------|
-| `gfv unlink` | Deletes | Keeps (default) |
-| `gfv unlink --delete-source` | Deletes | Deletes ⚠️ |
+| `gfv unlink` | Removes from manifest | Keeps |
+| `gfv unlink --delete-files` | Removes from manifest and vault | Keeps |
 | Manual delete of source | No change | Deleted |
 
 ## Recovery
@@ -175,7 +134,13 @@ git checkout <commit-hash>~1 -- <vault-path>
 ### Stop managing a file
 ```bash
 gfv unlink old-config
-# Source file kept, vault cleaned up
+# Removed from manifest, source file kept
+```
+
+### Clean up vault completely
+```bash
+gfv unlink old-config --delete-files
+# Removed from manifest and vault
 ```
 
 ### Clean up after moving file
