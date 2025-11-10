@@ -20,6 +20,29 @@ git-file-vault helps you manage and sync important configuration files (dotfiles
 
 ## Installation
 
+### macOS / Linux (Homebrew)
+
+```bash
+# Add the tap
+brew tap billxc/tap
+
+# Install gfv
+brew install gfv
+
+# Or install in one command
+brew install billxc/tap/gfv
+```
+
+### Windows (Scoop)
+
+```powershell
+# Add the bucket
+scoop bucket add xc-scoop https://github.com/billxc/xc-scoop
+
+# Install gfv
+scoop install gfv
+```
+
 ### From source (Rust required)
 
 ```bash
