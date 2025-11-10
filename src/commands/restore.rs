@@ -155,11 +155,8 @@ pub fn restore(
 
         // Copy file or directory
         if vault_file_path.is_dir() {
-            // Remove existing directory and copy fresh
-            if source_path.exists() {
-                fs::remove_dir_all(&source_path)?;
-            }
-            copy_dir_recursive(&vault_file_path, &source_path)?;
+            // Sync directory: copy from vault and remove files not in vault
+            sync_directory(&vault_file_path, &source_path)?;
         } else {
             fs::copy(&vault_file_path, &source_path)?;
         }
@@ -192,10 +189,39 @@ pub fn restore(
     Ok(())
 }
 
-/// Recursively copy directory
-fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> Result<()> {
+/// Synchronize directory from source to destination
+/// - Copies all files/dirs from src to dst
+/// - Removes files/dirs in dst that don't exist in src
+fn sync_directory(src: &std::path::Path, dst: &std::path::Path) -> Result<()> {
+    use std::collections::HashSet;
+
     fs::create_dir_all(dst)?;
 
+    // Collect all entries in source directory
+    let mut src_entries = HashSet::new();
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        src_entries.insert(entry.file_name());
+    }
+
+    // Remove files in destination that don't exist in source
+    if dst.exists() && dst.is_dir() {
+        for entry in fs::read_dir(dst)? {
+            let entry = entry?;
+            let file_name = entry.file_name();
+
+            if !src_entries.contains(&file_name) {
+                let dst_path = entry.path();
+                if dst_path.is_dir() {
+                    fs::remove_dir_all(&dst_path)?;
+                } else {
+                    fs::remove_file(&dst_path)?;
+                }
+            }
+        }
+    }
+
+    // Copy/update files from source to destination
     for entry in fs::read_dir(src)? {
         let entry = entry?;
         let file_type = entry.file_type()?;
@@ -203,7 +229,7 @@ fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> Result<()
         let dst_path = dst.join(entry.file_name());
 
         if file_type.is_dir() {
-            copy_dir_recursive(&src_path, &dst_path)?;
+            sync_directory(&src_path, &dst_path)?;
         } else {
             fs::copy(&src_path, &dst_path)?;
         }
