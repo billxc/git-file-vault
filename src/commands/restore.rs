@@ -121,18 +121,23 @@ pub fn restore(
         // Check platform restriction
         if let Some(ref platform) = entry.platform {
             let current_os = std::env::consts::OS;
-            let platform_match = match platform.as_str() {
-                "macos" => current_os == "macos",
-                "linux" => current_os == "linux",
-                "windows" => current_os == "windows",
-                _ => true,
-            };
+            
+            // Known platform identifiers
+            const KNOWN_PLATFORMS: &[&str] = &["macos", "linux", "windows"];
+            
+            // Only skip if:
+            // 1. Platform is a known OS name AND
+            // 2. It doesn't match the current OS
+            // Non-standard platform values (e.g., "any", "cross-platform") are never skipped
+            let should_skip = KNOWN_PLATFORMS.contains(&platform.as_str()) 
+                && platform.as_str() != current_os;
 
-            if !platform_match {
-                println!("  {} Skipping {} (platform: {})",
+            if should_skip {
+                println!("  {} Skipping {} (platform: {} != {})",
                     "⚠".yellow(),
                     vault_relative_path,
-                    platform
+                    platform,
+                    current_os
                 );
                 files_skipped += 1;
                 continue;
